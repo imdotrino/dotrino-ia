@@ -68,16 +68,20 @@
 - [ ] **Probar (dueño):** `IA_CWD=/tu/proyecto CLAUDE_FLAGS='--dangerously-skip-permissions' npx @dotrino/ia-agent` → chat desde `ia` → responde Claude
 - [x] Commit + push (`654e713`, tag `v0.2.0`, npm `@dotrino/ia-agent@0.2.0`)
 
-## F2 — Streaming real
+## F2 — Streaming real — HECHO (falta prueba del dueño)
 
-- [ ] Migrar `ClaudeDriver` al SDK `@anthropic-ai/claude-code` (verificar API/versión)
-- [ ] `onToken` callback → emitir `ia.tok {sid, seq, text, final?}` al cliente
-- [ ] Backpressure: batch de tokens cada ~50 ms
-- [ ] Cliente: reensamblar `seq` y renderizar incremental (append, no reemplazar)
-- [ ] `ia.done {usage, sessionId}` al cerrar la respuesta
-- [ ] Cancelar generación (botón stop → matar/abortar el driver)
-- [ ] Probar streaming en vivo (respuesta larga token a token)
-- [ ] Commit + push
+> Commit `9949f48`, npm `@dotrino/ia-agent@0.3.0`. Streaming token a token vía CLI
+> `stream-json` (sin dep SDK); el chat ya lo renderiza incremental (`onToken` de F0).
+> Pendiente: botón stop/cancelar.
+
+- [x] Migrar `ClaudeDriver` a streaming — `--output-format stream-json --verbose` y parseo de `content_block_delta`/`text_delta` (sin añadir dependencia SDK)
+- [x] `onToken(tok)` → emite `ia.tok {text}` al cliente por cada delta
+- [x] Backpressure: batch de tokens cada ~60 ms (no saturar el rate-limit del proxy)
+- [x] Cliente: render incremental (append, ya venía de F0; `chatScreen.onToken`)
+- [x] `ia.done {sessionId, tokens}` al cerrar; fallback al `result` si no hubo deltas
+- [ ] Cancelar generación (botón stop → matar el driver `claude`)
+- [ ] **Probar (dueño):** `IA_CWD=... CLAUDE_FLAGS='--dangerously-skip-permissions' npx @dotrino/ia-agent@0.3.0` → chat → los tokens aparecen uno a uno
+- [x] Commit + push (`9949f48`, tag `v0.3.0`)
 
 ## F3 — Multi-sesión/proyecto + selector de modelo
 
