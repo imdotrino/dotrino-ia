@@ -117,14 +117,14 @@
 - [ ] (Opcional) TWA Android si hace falta (ver `TWA.md`)
 - [ ] (Opcional) Forzar HTTPS cuando GitHub emita el cert del subdominio
 
-## 2. Refactor `vault.dotrino.com/pair` (emparejador self independiente) — PENDIENTE
+## 2. Refactor `vault.dotrino.com/pair` (emparejador self independiente) — HECHO
 
-> Decisión (2026-07-16): centralizar el modo "este dispositivo como vault" + el
-> emparejamiento de agentes en `vault.dotrino.com/pair`. **No implementado por límite
-> de tokens.** `vault.dotrino.com` ya existe (landing Vite+Vue en `dotrino-vault/web/`).
-> Detalle del diseño en `PLAN.md` §13. Afecta a **ia + terminal**.
+> Implementado (2026-07-16). El modo "este dispositivo como vault" + el emparejamiento
+> de agentes se centralizaron en `vault.dotrino.com/pair` (multi-page Vite en
+> `dotrino-vault/web/`). ia y terminal derivan su botón self ahí. Detalle en `PLAN.md` §13.
 
-- [ ] `vault.dotrino.com/pair`: nueva ruta — `startDeviceVault` + QR + aprobación SAS + listado de dispositivos + redirect `?back=<url>` (ref: `selfTerminalScreen` en `dotrino-terminal/src/main.js:471-636`)
-- [ ] `dotrino-ia`: el botón "este dispositivo como vault" abre `vault.dotrino.com/pair?back=ia.dotrino.com` (hoy es placeholder "próximamente" — reemplazar por el link)
-- [ ] `dotrino-terminal`: reemplazar `selfTerminalScreen` por link a `…?back=terminal.dotrino.com` (verificable aparte, con vault+proxy reales)
-- [ ] Documentar en `CLAUDE.md`/`CONVENCIONES-APPS` que el emparejamiento self vive en `vault.dotrino.com/pair` (regla del ecosistema, como ya lo es `@dotrino/remote-agent`)
+- [x] `vault.dotrino.com/pair`: nueva ruta — `startDeviceVault` + QR + aprobación SAS + listado de dispositivos + redirect `?back=<url>` (commit `3aa1384` en dotrino-vault, build OK)
+- [x] `dotrino-ia`: el botón "este dispositivo como vault" abre `vault.dotrino.com/pair?back=<origin>` (commit `025c593`)
+- [x] `dotrino-terminal`: el botón self deriva a `…?back=<origin>` (commit `6d7481a`; **`selfTerminalScreen` quedó como código muerto — deuda: eliminar cuando se verifique E2E**)
+- [ ] Documentar en `CLAUDE.md`/`CONVENCIONES-APPS` que el emparejamiento self vive en `vault.dotrino.com/pair` (regla del ecosistema)
+- [ ] Verificación E2E del dueño: en ia/terminal elegir self → abre /pair → enlaza agente → vuelve y lo ve

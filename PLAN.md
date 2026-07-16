@@ -348,10 +348,14 @@ temporal y la extracción queda primera tarea de la próxima sesión.
 
 ## 13. Refactor pendiente: `vault.dotrino.com/pair` (emparejador self independiente)
 
-> **Estado (2026-07-16): decisión tomada, NO implementado por límite de tokens.**
-> El modo "este dispositivo como vault" (self) y el emparejamiento de agentes **no
-> deben duplicarse en cada app**. Se centralizan en `vault.dotrino.com/pair`, que ya
-> existe como landing (app Vite+Vue en `dotrino-vault/web/`). **Afecta a ia + terminal.**
+> **Estado (2026-07-16): IMPLEMENTADO.** `vault.dotrino.com/pair` creado (commit
+> `3aa1384` en `dotrino-vault`, multi-page Vite); `dotrino-ia` (`025c593`) y
+> `dotrino-terminal` (`6d7481a`) derivan su modo self ahí. Pendiente: limpiar
+> `selfTerminalScreen` (código muerto en terminal) y documentar la regla en
+> `CLAUDE.md`/`CONVENCIONES`. El modo "este dispositivo como vault" (self) y el
+> emparejamiento de agentes **no deben duplicarse en cada app**. Se centralizan en
+> `vault.dotrino.com/pair`, que ya existe como landing (app Vite+Vue en
+> `dotrino-vault/web/`). **Afecta a ia + terminal.**
 
 **Qué hacer (orden):**
 
