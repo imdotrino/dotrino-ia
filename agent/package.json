@@ -9,11 +9,15 @@
   "exports": {
     ".": "./index.js"
   },
+  "files": [
+    "index.js",
+    "bin"
+  ],
   "scripts": {
     "start": "node bin/cli.js run"
   },
   "dependencies": {
-    "@dotrino/remote-agent": "file:../../dotrino-remote-agent"
+    "@dotrino/remote-agent": "^0.1.0"
   },
   "engines": {
     "node": ">=18"
