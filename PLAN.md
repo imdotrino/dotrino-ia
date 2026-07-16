@@ -343,3 +343,40 @@ temporal y la extracción queda primera tarea de la próxima sesión.
   el momento de F1/F2 y su API de streaming + permisos. El spawn crudo
   (`claude -p --output-format stream-json`) es el fallback (lo usa el bot de TG).
 - **`opencode serve`:** confirmar la API exacta de streaming/sesiones al llegar a F4.
+
+---
+
+## 13. Refactor pendiente: `vault.dotrino.com/pair` (emparejador self independiente)
+
+> **Estado (2026-07-16): decisión tomada, NO implementado por límite de tokens.**
+> El modo "este dispositivo como vault" (self) y el emparejamiento de agentes **no
+> deben duplicarse en cada app**. Se centralizan en `vault.dotrino.com/pair`, que ya
+> existe como landing (app Vite+Vue en `dotrino-vault/web/`). **Afecta a ia + terminal.**
+
+**Qué hacer (orden):**
+
+1. **`vault.dotrino.com/pair`** — nueva ruta en la web de vault que centraliza el
+   self-vault: levanta `startDeviceVault` (de `@dotrino/vault`), genera el código de
+   emparejamiento (QR), aprueba con SAS y lista los dispositivos enlazados. Acepta
+   `?back=<url-de-la-app>` y, tras enlazar, redirige de vuelta a esa URL. Tomar como
+   referencia `selfTerminalScreen` de `dotrino-terminal/src/main.js:471-636`.
+2. **`dotrino-ia`** — el botón "este dispositivo como vault" (`choiceScreen` de
+   `src/main.js`) abre `https://vault.dotrino.com/pair?back=ia.dotrino.com` en vez de
+   un `selfIaScreen` embebido. (Hoy el self es un placeholder "próximamente": OK así
+   hasta que `/pair` exista; entonces se reemplaza por el link.)
+3. **`dotrino-terminal`** — igual: reemplazar `selfTerminalScreen` por el link a
+   `…?back=terminal.dotrino.com`. Tarea **verificable aparte** (probar terminal tras el
+   cambio, con vault+proxy reales).
+
+**Daemon self:** vive en la pestaña de `vault.dotrino.com/pair` (mantener abierta o
+instalar vault.dotrino.com como PWA). Las apps (ia, terminal) consumen el vault vía
+`@dotrino/identity` (`getSelfLink`) y listan agentes con `listVaultDevices()`; para que
+la lista responda, el vault-daemon tiene que estar activo en `vault.dotrino.com`.
+
+**Alcance de `/pair`:** solo el caso **self** (este dispositivo como vault + enlazar
+agentes/máquinas). **Emparejar un navegador a un vault externo** sigue en
+`profile.dotrino.com/#vault` (no cambia). El agente Node sigue con su `enroll` propio.
+
+**Beneficio:** cero duplicación de la UI de emparejamiento (hoy copiada en
+`selfTerminalScreen` y, temporalmente, en `selfIaScreen`); el vault es un pilar con una
+sola interfaz, como ya lo es su lógica (`@dotrino/vault`). Las apps quedan delgadas.

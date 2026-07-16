@@ -116,3 +116,15 @@
 - [ ] Commit + push de `dotrino-home`; verificar tarjeta en `https://dotrino.com/`
 - [ ] (Opcional) TWA Android si hace falta (ver `TWA.md`)
 - [ ] (Opcional) Forzar HTTPS cuando GitHub emita el cert del subdominio
+
+## 2. Refactor `vault.dotrino.com/pair` (emparejador self independiente) — PENDIENTE
+
+> Decisión (2026-07-16): centralizar el modo "este dispositivo como vault" + el
+> emparejamiento de agentes en `vault.dotrino.com/pair`. **No implementado por límite
+> de tokens.** `vault.dotrino.com` ya existe (landing Vite+Vue en `dotrino-vault/web/`).
+> Detalle del diseño en `PLAN.md` §13. Afecta a **ia + terminal**.
+
+- [ ] `vault.dotrino.com/pair`: nueva ruta — `startDeviceVault` + QR + aprobación SAS + listado de dispositivos + redirect `?back=<url>` (ref: `selfTerminalScreen` en `dotrino-terminal/src/main.js:471-636`)
+- [ ] `dotrino-ia`: el botón "este dispositivo como vault" abre `vault.dotrino.com/pair?back=ia.dotrino.com` (hoy es placeholder "próximamente" — reemplazar por el link)
+- [ ] `dotrino-terminal`: reemplazar `selfTerminalScreen` por link a `…?back=terminal.dotrino.com` (verificable aparte, con vault+proxy reales)
+- [ ] Documentar en `CLAUDE.md`/`CONVENCIONES-APPS` que el emparejamiento self vive en `vault.dotrino.com/pair` (regla del ecosistema, como ya lo es `@dotrino/remote-agent`)
