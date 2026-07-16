@@ -52,17 +52,21 @@
 - [ ] **Probar extremo a extremo** (lo hace el dueño): `dotrino-ia-agent enroll` → abrir PWA → ver el agente → chat echo
 - [x] Commit + push (`88ad83d`)
 
-## F1 — UI de chat + driver Claude (no-streaming)
+## F1 — UI de chat + driver Claude (no-streaming) — HECHO (falta prueba del dueño)
 
-- [ ] Renderer de chat real: burbujas usuario/agente, markdown, bloques de código
-- [ ] Estado: una sesión por agente, persistir `sessionId` en el store/localStorage
-- [ ] `ClaudeDriver` con spawn `claude -p "<msg>" --output-format json --resume <sid>` (patrón `telegram-claude-bot/bot.js:219-226`)
-- [ ] Parsear `{result, session_id, usage}` y mostrar `result` al final (no streaming aún)
-- [ ] `typing…` mientras corre (indicador, no colgado)
-- [ ] Recuperación de sesión inválida (borrar sid y reintentar, `bot.js:199-205`)
-- [ ] Selector de `cwd` (proyecto) y `mode` (safe/auto/yolo) por sesión
-- [ ] Probar: mensaje → respuesta completa de Claude → continuidad con `--resume`
-- [ ] Commit + push
+> Commit `654e713`, publicado `@dotrino/ia-agent@0.2.0`. El driver lanza
+> `claude -p --output-format json --resume`; el chat muestra "pensando…" hasta la
+> respuesta completa. F2 lo sube a streaming real.
+
+- [x] Renderer de chat: burbujas usuario/agente, bloques de código (de F0)
+- [x] Una sesión por agente; `sessionId` lo mantiene el `ClaudeDriver` por sesión
+- [x] `ClaudeDriver` con spawn `claude -p "<msg>" --output-format json --resume <sid>` (`agent/drivers/claude.js`, patrón del bot de TG)
+- [x] Parsear `{result, session_id, usage}` → `session.send({type:'done', text, sessionId, tokens})`
+- [x] `pensando…` mientras corre (chatScreen `setThinking`)
+- [x] Recuperación de sesión inválida (borra sid y reintenta)
+- [ ] Selector de `cwd`/`mode` por sesión en la UI (hoy por env: `IA_CWD`, `CLAUDE_FLAGS` → a la UI en F3)
+- [ ] **Probar (dueño):** `IA_CWD=/tu/proyecto CLAUDE_FLAGS='--dangerously-skip-permissions' npx @dotrino/ia-agent` → chat desde `ia` → responde Claude
+- [x] Commit + push (`654e713`, tag `v0.2.0`, npm `@dotrino/ia-agent@0.2.0`)
 
 ## F2 — Streaming real
 
