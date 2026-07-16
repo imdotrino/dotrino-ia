@@ -12,24 +12,23 @@
 - [x] Agregar remote `git@dotrino:imdotrino/dotrino-ia.git` (alias SSH `dotrino`)
 - [x] Push a `main` → https://github.com/imdotrino/dotrino-ia (commit `6869676`)
 
-## 1. Extracción de `@dotrino/remote-agent` (código común)
+## 1. Extracción de `@dotrino/remote-agent` (código común) — HECHO (parcial)
 
-> Prioridad: alta. Idealmente antes de F1, para que ia lo consuma desde el inicio.
-> Si los tokens aprietan, F0 puede usar copia temporal y dejar esto como primera
-> tarea de la próxima sesión.
+> Paquete creado y pusheado: https://github.com/imdotrino/dotrino-remote-agent
+> Smoke test OK (los 5 entrypoints importan limpios). Faltan 2 ítems verificados abajo.
 
-- [ ] Crear repo `imdotrino/dotrino-remote-agent` + carpeta local
-- [ ] `package.json` con `exports`: `.` `/agent` `/client` `/link` `/discover`
-- [ ] Mover `dotrino-terminal/shared/e2e.js` → `@dotrino/remote-agent` (raíz)
-- [ ] Extraer `startRemoteAgent` de `terminal/agent/index.js` → `remote-agent/agent`
-- [ ] Extraer `AgentClient` de `terminal/src/agentClient.js` → `remote-agent/client` (renombrar a `RemoteAgentClient`)
-- [ ] Extraer `enroll` SAS de `terminal/agent/link.js` → `remote-agent/link`
-- [ ] Extraer descubrimiento por label de `terminal/src/main.js:401-465` → `remote-agent/discover`
-- [ ] Generalizar el label (`terminal-agent` / `ia-agent`) como parámetro, no hardcodeado
-- [ ] Protocolo: exponer constantes base `HS/ACK/PING/PONG` + hook para msgs de dominio
-- [ ] README del paquete con la API (ver §5 del PLAN.md)
-- [ ] Publicar en npm (`commit → tag → npm publish`)
-- [ ] Migrar `dotrino-terminal` a consumir `@dotrino/remote-agent` (sin cambiar comportamiento)
+- [x] Crear repo `imdotrino/dotrino-remote-agent` + carpeta local
+- [x] `package.json` con `exports`: `.` `/agent` `/client` `/link` `/discover`
+- [x] Mover `dotrino-terminal/shared/e2e.js` → `@dotrino/remote-agent/e2e.js` (info string → `dotrino-remote-agent-e2e`)
+- [x] Extraer `startRemoteAgent` de `terminal/agent/index.js` → `src/agent.js` (sin PTY; entrega sesiones vía `onSession`)
+- [x] Extraer `AgentClient` de `terminal/src/agentClient.js` → `src/client.js` (`RemoteAgentClient` con `send(payload)`/`on('message')`)
+- [x] Extraer `enroll` SAS de `terminal/agent/link.js` → `src/link.js` (`dataDir(name)` + `label` param)
+- [x] Extraer descubrimiento por label de `terminal/src/main.js:401-465` → `src/discover.js` (`listAgentsByLabel`)
+- [x] Generalizar el label (`terminal-agent` / `ia-agent`) como parámetro
+- [x] Protocolo: constantes base `ra.*` (`HS/ACK/DATA/PING/PONG/ERROR`) en `protocol.js`; payloads de dominio libres
+- [x] README del paquete con la API
+- [ ] **Publicar en npm** (`commit → tag → npm publish`) — PENDIENTE: `npm whoami` da 401; hace falta `npm login` con el scope `@dotrino`
+- [ ] Migrar `dotrino-terminal` a consumir `@dotrino/remote-agent` (sin cambiar comportamiento) — tarea **verificable aparte** (requiere probar terminal con vault+proxy reales; no bloquea a ia, que consume el paquete desde F0)
 - [ ] Verificar que terminal sigue funcionando igual (probar handshake + una consola)
 
 ## F0 — Andamiaje de `dotrino-ia`
