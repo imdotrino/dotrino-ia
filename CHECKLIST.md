@@ -3,14 +3,14 @@
 > Accionable y tachable por fases. Mirá aquí el estado; el detalle de diseño está en
 > `PLAN.md`. Marcar `[x]` solo cuando el paso esté **hecho y verificado**.
 
-## 0. Plan + repo (-setup inicial)
+## 0. Plan + repo (setup inicial)
 
 - [x] Escribir `PLAN.md` (autosuficiente)
 - [x] Escribir `CHECKLIST.md` (este archivo)
-- [ ] Crear repo `imdotrino/dotrino-ia` (público) vía `gh repo create`
-- [ ] `git init -b main`, commit inicial con `PLAN.md` + `CHECKLIST.md`
-- [ ] Agregar remote `git@dotrino:imdotrino/dotrino-ia.git` (alias SSH `dotrino`)
-- [ ] Push a `main` (verificar en `https://github.com/imdotrino/dotrino-ia`)
+- [x] Crear repo `imdotrino/dotrino-ia` (público) vía `gh repo create`
+- [x] `git init -b main`, commit inicial con `PLAN.md` + `CHECKLIST.md`
+- [x] Agregar remote `git@dotrino:imdotrino/dotrino-ia.git` (alias SSH `dotrino`)
+- [x] Push a `main` → https://github.com/imdotrino/dotrino-ia (commit `6869676`)
 
 ## 1. Extracción de `@dotrino/remote-agent` (código común)
 
