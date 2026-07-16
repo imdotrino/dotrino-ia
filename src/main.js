@@ -11,7 +11,7 @@
  * @dotrino/remote-agent; esta app solo define el dominio (chat) y el renderer.
  */
 import './style.css'
-import { identity, getLink, selfModeEnabled, setSelfMode } from './vault.js'
+import { identity, getLink, selfModeEnabled } from './vault.js'
 import { IaAgentClient } from './agentClient.js'
 import { listAgentsByLabel } from '@dotrino/remote-agent/discover'
 import { pubkeyId, avatarDataUri } from '@dotrino/identity/capabilities'
@@ -109,8 +109,11 @@ function choiceScreen () {
         <button class="link" id="goSelf">${t('self')} — <span class="hint">${t('self_desc')}</span></button>
       </div>
     </section>`))
-  app.querySelector('#goVault').addEventListener('click', () => { setSelfMode(false); render() })
-  app.querySelector('#goSelf').addEventListener('click', () => { setSelfMode(true); render() })
+  app.querySelector('#goVault').addEventListener('click', () => render())
+  app.querySelector('#goSelf').addEventListener('click', () => {
+    const back = encodeURIComponent(location.origin + location.pathname)
+    location.href = `https://vault.dotrino.com/pair?back=${back}`
+  })
 }
 
 // --- Pantalla: lista de agentes descubiertos (modo vault externo) ---
@@ -231,11 +234,9 @@ async function render () {
   app.replaceChildren(el(`<section class="card"><span class="status">${t('link_loading')}</span></section>`))
   try {
     if (selfModeEnabled()) {
-      app.replaceChildren(el(`<section class="card">
-        <h2>${t('self')} <span class="hint">(${t('soon')})</span></h2>
-        <p class="status">${t('self_soon')}</p>
-        <p><button class="link" id="exitSelf">${t('back')}</button></p></section>`))
-      app.querySelector('#exitSelf').addEventListener('click', () => { setSelfMode(false); render() })
+      // Sesión vieja con self-mode: derivar al emparejador independiente.
+      const back = encodeURIComponent(location.origin + location.pathname)
+      location.href = `https://vault.dotrino.com/pair?back=${back}`
       return
     }
     const link = await getLink()
