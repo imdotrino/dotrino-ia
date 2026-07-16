@@ -31,23 +31,26 @@
 - [ ] Migrar `dotrino-terminal` a consumir `@dotrino/remote-agent` (sin cambiar comportamiento) — tarea **verificable aparte** (requiere probar terminal con vault+proxy reales; no bloquea a ia, que consume el paquete desde F0)
 - [ ] Verificar que terminal sigue funcionando igual (probar handshake + una consola)
 
-## F0 — Andamiaje de `dotrino-ia`
+## F0 — Andamiaje de `dotrino-ia` — HECHO (falta prueba E2E manual)
 
-- [ ] Copiar `dotrino-terminal/` → `dotrino-ia/` (menos `.git`, `node_modules`, `dist`)
-- [ ] Renombrar en `package.json` (`name`, `description`, versión `0.1.0`)
-- [ ] `index.html`: título/description/canonical/OG/Twitter/JSON-LD → `ia.dotrino.com`
-- [ ] `public/`: renombrar `CACHE` del SW a `ia-v1`, regenerar iconos + `og.jpg` (§10 CONVENCIONES)
-- [ ] `public/CNAME` → `ia.dotrino.com`
-- [ ] `robots.txt` + `sitemap.xml` apuntando a `ia.dotrino.com`
-- [ ] `<dotrino-topbar>` con `support-repo="imdotrino/dotrino-ia"` + perfil
-- [ ] GoatCounter (cookieless, dominio por delante)
-- [ ] `.npmrc` endurecido + `.nojekyll`
-- [ ] Cambiar label `terminal-agent` → `ia-agent` en agente y filtro del cliente
-- [ ] Reemplazar `node-pty` del agente por **driver echo** (devuelve el texto recibido)
-- [ ] Reemplazar xterm por UI mínima (input + área de texto) que renderice el echo
-- [ ] `npm install && npm run build` (verifica que compila)
-- [ ] Probar extremo a extremo: enrolar agente → descubrirlo desde la PWA → chat echo
-- [ ] Commit + push
+> Commit `88ad83d`. Build Vite OK, smoke del agente OK. Faltan: iconos propios y la
+> prueba extremo a extremo con vault+agente reales (la hace el dueño).
+
+- [x] Copiar `dotrino-terminal/` → `dotrino-ia/` (middleware intacto)
+- [x] Renombrar en `package.json` (`name: dotrino-ia`, `description`, `0.1.0`)
+- [x] `index.html`: título/description/canonical/OG/Twitter/JSON-LD → `ia.dotrino.com`
+- [x] `public/`: SW `CACHE = 'ia-v1'`; **iconos + `og.jpg` son PLACEHOLDER heredados de terminal** (regenerar en F6)
+- [x] `public/CNAME` → `ia.dotrino.com`
+- [x] `robots.txt` + `sitemap.xml` apuntando a `ia.dotrino.com`
+- [x] `<dotrino-topbar>` con `support-repo="imdotrino/dotrino-ia"` + perfil
+- [x] GoatCounter (cookieless, dominio por delante)
+- [x] `.npmrc` endurecido + `.nojekyll`
+- [x] Cambiar label a `ia-agent` (agente + `listAgentsByLabel`)
+- [x] Reemplazar `node-pty` por **driver echo** (`agent/index.js`)
+- [x] Reemplazar xterm por **UI de chat** (`src/main.js` + `agentClient.js`)
+- [x] `npm install && npm run build` OK (30 módulos, sin errores)
+- [ ] **Probar extremo a extremo** (lo hace el dueño): `dotrino-ia-agent enroll` → abrir PWA → ver el agente → chat echo
+- [x] Commit + push (`88ad83d`)
 
 ## F1 — UI de chat + driver Claude (no-streaming)
 
