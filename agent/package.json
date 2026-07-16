@@ -1,0 +1,27 @@
+{
+  "name": "@dotrino/ia-agent",
+  "version": "0.1.0",
+  "description": "Agente de Dotrino IA: expone tus CLIs de IA (Claude, OpenCode) al chat remoto de ia.dotrino.com, vía @dotrino/remote-agent.",
+  "type": "module",
+  "bin": {
+    "dotrino-ia-agent": "bin/cli.js"
+  },
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js run"
+  },
+  "dependencies": {
+    "@dotrino/remote-agent": "file:../../dotrino-remote-agent"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/imdotrino/dotrino-ia.git",
+    "directory": "agent"
+  }
+}

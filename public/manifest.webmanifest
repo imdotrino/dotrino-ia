@@ -1,0 +1,17 @@
+{
+  "name": "Dotrino IA",
+  "short_name": "IA",
+  "description": "Chat privado con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el móvil.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0b1a",
+  "theme_color": "#0e0b1a",
+  "launch_handler": { "client_mode": "focus-existing" },
+  "lang": "es",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -27,7 +27,7 @@
 - [x] Generalizar el label (`terminal-agent` / `ia-agent`) como parámetro
 - [x] Protocolo: constantes base `ra.*` (`HS/ACK/DATA/PING/PONG/ERROR`) en `protocol.js`; payloads de dominio libres
 - [x] README del paquete con la API
-- [ ] **Publicar en npm** (`commit → tag → npm publish`) — PENDIENTE: `npm whoami` da 401; hace falta `npm login` con el scope `@dotrino`
+- [ ] **Publicar en npm** (`commit → tag → npm publish`) — BLOQUEADO: `npm publish` da 404 y `npm whoami` 401; el token de `~/.npmrc` no autentica contra el scope `@dotrino`. Hace falta `npm login` con la cuenta que publica los `@dotrino/*` y luego `npm publish` + `git tag v0.1.0 && git push origin v0.1.0`. Mientras, ia consume el paquete por `file:../dotrino-remote-agent`.
 - [ ] Migrar `dotrino-terminal` a consumir `@dotrino/remote-agent` (sin cambiar comportamiento) — tarea **verificable aparte** (requiere probar terminal con vault+proxy reales; no bloquea a ia, que consume el paquete desde F0)
 - [ ] Verificar que terminal sigue funcionando igual (probar handshake + una consola)
 
