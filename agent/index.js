@@ -4,8 +4,9 @@
  * Expone tus CLIs de IA (Claude, OpenCode…) al chat remoto, sobre
  * `@dotrino/remote-agent` (handshake E2E, emparejamiento con vault, revocación).
  *
- * F1: driver Claude (no-streaming) — `claude -p --output-format json --resume`.
- * F2: migrar a SDK con streaming de tokens. F4: driver OpenCode.
+ * F2: driver Claude con STREAMING real (stream-json). Los tokens del modelo se
+ * reenvían al cliente como mensajes `ia.tok` (batcheados ~60 ms para no saturar el
+ * proxy) y el cierre como `ia.done`. F4: driver OpenCode.
  *
  * Configuración (env):
  *   IA_CWD         directorio donde opera Claude (default: el cwd al lanzar).
@@ -34,11 +35,26 @@ export async function startIaAgent (opts = {}) {
       const driver = new ClaudeDriver({ cwd: CWD, bin: CLAUDE_BIN, flags: CLAUDE_FLAGS, timeoutMs: CLAUDE_TIMEOUT })
       session.on('message', async (msg) => {
         if (msg?.type !== 'msg' || typeof msg.text !== 'string') return
+
+        // Batch de tokens (~60 ms): el rate-limit del proxy es discreto; sin batch,
+        // una ráfaga de deltas saturaría. Flush al final siempre.
+        let buf = ''
+        let timer = null
+        const flush = () => { timer = null; if (buf) { const t = buf; buf = ''; session.send({ type: 'tok', text: t }).catch(() => {}) } }
+
         try {
-          const r = await driver.send(msg.text)
-          await session.send({ type: 'done', text: r.text, sessionId: r.sessionId, tokens: r.tokens })
+          const r = await driver.send(msg.text, {
+            onToken: (tok) => {
+              buf += tok
+              if (!timer) timer = setTimeout(flush, 60)
+            }
+          })
+          if (timer) { clearTimeout(timer); timer = null }
+          if (buf) { const t = buf; buf = ''; await session.send({ type: 'tok', text: t }) }
+          await session.send({ type: 'done', sessionId: r.sessionId, tokens: r.tokens })
         } catch (e) {
-          await session.send({ type: 'error', message: e.message })
+          if (timer) clearTimeout(timer)
+          await session.send({ type: 'error', message: e.message }).catch(() => {})
         }
       })
     }
