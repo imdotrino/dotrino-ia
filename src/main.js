@@ -11,7 +11,7 @@
  * @dotrino/remote-agent; esta app solo define el dominio (chat) y el renderer.
  */
 import './style.css'
-import { identity, getLink, selfModeEnabled } from './vault.js'
+import { identity, getLink, getSelfLink } from './vault.js'
 import { IaAgentClient } from './agentClient.js'
 import { listAgentsByLabel } from '@dotrino/remote-agent/discover'
 import { pubkeyId, avatarDataUri } from '@dotrino/identity/capabilities'
@@ -109,7 +109,9 @@ function choiceScreen () {
         <button class="link" id="goSelf">${t('self')} — <span class="hint">${t('self_desc')}</span></button>
       </div>
     </section>`))
-  app.querySelector('#goVault').addEventListener('click', () => render())
+  app.querySelector('#goVault').addEventListener('click', () => {
+    location.href = 'https://profile.dotrino.com/#vault'
+  })
   app.querySelector('#goSelf').addEventListener('click', () => {
     const back = encodeURIComponent(location.origin + location.pathname)
     location.href = `https://vault.dotrino.com/pair?back=${back}`
@@ -233,23 +235,25 @@ async function chatScreen (link, agent) {
 async function render () {
   app.replaceChildren(el(`<section class="card"><span class="status">${t('link_loading')}</span></section>`))
   try {
-    if (selfModeEnabled()) {
-      // Sesión vieja con self-mode: derivar al emparejador independiente.
-      const back = encodeURIComponent(location.origin + location.pathname)
-      location.href = `https://vault.dotrino.com/pair?back=${back}`
-      return
-    }
     const link = await getLink()
-    if (!link.paired) {
-      const why = link.expired ? t('link_expired') : t('not_linked_desc')
-      app.replaceChildren(el(`<section class="card">
-        <b>${t('not_linked')}</b>
-        <p class="status">${esc(why)}</p>
-        <p><a class="primary" style="display:inline-block;text-decoration:none" href="https://profile.dotrino.com/#vault" target="_blank" rel="noopener">${t('pair_here')}</a></p>
-      </section>`))
+    if (link.paired) return iaScreen(link)
+    if (link.expired) {
+      app.replaceChildren(el(`<section class="card"><b>${t('not_linked')}</b>
+        <p class="status">${t('link_expired')}</p>
+        <p><a class="primary" style="display:inline-block;text-decoration:none" href="https://profile.dotrino.com/#vault" target="_blank" rel="noopener">${t('pair_here')}</a></p></section>`))
       return
     }
-    await iaScreen(link)
+    // Sin vault externo: ¿este navegador es su PROPIO vault (self)? Si tiene identidad
+    // y hay agentes enrolados a ella, operar en modo self (requiere vault.dotrino.com/pair activo).
+    try {
+      const selfLink = await getSelfLink()
+      if (selfLink.id?.me?.publickey) {
+        const agents = await listAgentsByLabel(selfLink.id, 'ia-agent')
+        if (agents.length) return iaScreen(selfLink)
+      }
+    } catch (_) {}
+    // No hay nada todavía: elegir cómo conectarse (vault externo / ser vault en /pair).
+    choiceScreen()
   } catch (e) {
     app.replaceChildren(el(`<section class="card"><span class="status">${esc(e.message)}</span></section>`))
   }
