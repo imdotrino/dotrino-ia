@@ -113,11 +113,11 @@ function choiceScreen () {
       </div>
     </section>`))
   app.querySelector('#goVault').addEventListener('click', () => {
-    location.href = 'https://profile.dotrino.com/#vault'
+    location.href = 'https://profile.dotrino.com/vault'
   })
   app.querySelector('#goSelf').addEventListener('click', () => {
     const back = encodeURIComponent(location.origin + location.pathname)
-    location.href = `https://profile.dotrino.com/?back=${back}#myvault`
+    location.href = `https://profile.dotrino.com/myvault?back=${back}`
   })
 }
 
@@ -243,7 +243,7 @@ async function render () {
     if (link.expired) {
       app.replaceChildren(el(`<section class="card"><b>${t('not_linked')}</b>
         <p class="status">${t('link_expired')}</p>
-        <p><a class="primary" style="display:inline-block;text-decoration:none" href="https://profile.dotrino.com/#vault" target="_blank" rel="noopener">${t('pair_here')}</a></p></section>`))
+        <p><a class="primary" style="display:inline-block;text-decoration:none" href="https://profile.dotrino.com/vault" target="_blank" rel="noopener">${t('pair_here')}</a></p></section>`))
       return
     }
     // Sin vault externo: ¿este navegador es su PROPIO vault (self)? Si tiene identidad
