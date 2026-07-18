@@ -114,7 +114,7 @@ function choiceScreen () {
   })
   app.querySelector('#goSelf').addEventListener('click', () => {
     const back = encodeURIComponent(location.origin + location.pathname)
-    location.href = `https://vault.dotrino.com/pair?back=${back}`
+    location.href = `https://profile.dotrino.com/?back=${back}#myvault`
   })
 }
 
@@ -244,7 +244,7 @@ async function render () {
       return
     }
     // Sin vault externo: ¿este navegador es su PROPIO vault (self)? Si tiene identidad
-    // y hay agentes enrolados a ella, operar en modo self (requiere vault.dotrino.com/pair activo).
+    // y hay agentes enrolados a ella, operar en modo self (daemon self-vault del iframe).
     try {
       const selfLink = await getSelfLink()
       if (selfLink.id?.me?.publickey) {
@@ -252,7 +252,7 @@ async function render () {
         if (agents.length) return iaScreen(selfLink)
       }
     } catch (_) {}
-    // No hay nada todavía: elegir cómo conectarse (vault externo / ser vault en /pair).
+    // No hay nada todavía: elegir cómo conectarse (vault externo / activar self-vault).
     choiceScreen()
   } catch (e) {
     app.replaceChildren(el(`<section class="card"><span class="status">${esc(e.message)}</span></section>`))
