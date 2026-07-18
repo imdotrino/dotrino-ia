@@ -147,11 +147,11 @@
     `?back=`, formato del código base64url en `parseQr`/`normalizeQr`, eco-de-SAS,
     los 10 `selfVault*` de `@dotrino/identity@0.22.1`, `listAgentsByLabel`). Falta la
     prueba con hardware (daemon del iframe + proxy).
-  - ⚠️ Hallazgo: **terminal** no cierra el bucle "vuelve y lo ve" — su `render()` no
-    detecta self (`getSelfLink`+`listAgentsByLabel`) como sí lo hace ia (main.js:246).
-    Tras enlazar por profile, terminal muestra el `choiceScreen`. Hueco preexistente
-    (no lo causó quitar el `selfTerminalScreen` muerto). Completarlo = añadir la rama
-    self en `render()` reusando `terminalScreen(selfLink)`.
+  - ✅ Resuelto (2026-07-18): **terminal** ya cierra el bucle "vuelve y lo ve" — su
+    `render()` detecta self (`selfMachines` sobre `listVaultDevices`) y reusa
+    `terminalScreen(selfLink)` (agnóstico al link; `AgentClient` soporta `mode:'self'`).
+    Espeja a ia. No se reintrodujo el `selfTerminalScreen` muerto. Falta la prueba
+    con hardware.
 - [x] Copy del CLI apunta a `profile.dotrino.com/#myvault` (no ia/terminal.dotrino.com):
   `@dotrino/ia-agent@0.3.2` + `@dotrino/terminal-agent@0.2.12` publicados (2026-07-18).
 - [x] `dotrino-terminal`: `selfTerminalScreen` (código muerto) removido; build OK,
