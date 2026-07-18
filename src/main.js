@@ -72,7 +72,10 @@ const I18N = {
   }
 }
 
-let lang = (document.documentElement.lang === 'en') ? 'en' : 'es'
+// Idioma: clave estándar del ecosistema 'dotrino.lang' (la misma que usa el topbar
+// y el resto de apps), con detección por navigator.language como respaldo — así la
+// preferencia de idioma viaja entre apps.
+let lang = (() => { try { const s = localStorage.getItem('dotrino.lang'); if (s === 'en' || s === 'es') return s } catch {} return ((navigator.language || '').slice(0, 2) === 'en') ? 'en' : 'es' })()
 const t = (k, ...a) => { let s = I18N[lang][k] ?? k; a.forEach((x, i) => { s = s.replace(`{${i}}`, x) }); return s }
 
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild }
@@ -93,7 +96,7 @@ async function wireTopbar () {
   tb.addEventListener('dotrino-lang', (e) => {
     lang = e.detail?.lang === 'en' ? 'en' : 'es'
     document.documentElement.lang = lang
-    try { localStorage.setItem('dotrino-lang', lang) } catch {}
+    try { localStorage.setItem('dotrino.lang', lang) } catch {}
     render()
   })
 }
@@ -278,8 +281,7 @@ async function setupPWA () {
 
 // --- Boot ---
 (async () => {
-  const saved = (() => { try { return localStorage.getItem('dotrino-lang') } catch { return null } })()
-  if (saved === 'en' || saved === 'es') { lang = saved; document.documentElement.lang = lang }
+  try { document.documentElement.lang = lang } catch {}
   await wireTopbar()
   await render()
   setupPWA()
