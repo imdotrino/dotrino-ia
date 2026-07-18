@@ -348,6 +348,11 @@ temporal y la extracción queda primera tarea de la próxima sesión.
 
 ## 13. Refactor pendiente: `vault.dotrino.com/pair` (emparejador self independiente)
 
+> **⚠️ SUPERSEDED (2026-07-18).** `/pair` fue eliminado. El daemon device-vault pasó a
+> vivir dentro del **iframe de identity** (`id.dotrino.com`), gestionado desde
+> **`profile.dotrino.com/#myvault`**. ia/terminal derivan ahí su botón self. Lo de
+> abajo queda como histórico de la iteración anterior.
+
 > **Estado (2026-07-16): IMPLEMENTADO.** `vault.dotrino.com/pair` creado (commit
 > `3aa1384` en `dotrino-vault`, multi-page Vite); `dotrino-ia` (`025c593`) y
 > `dotrino-terminal` (`6d7481a`) derivan su modo self ahí. Pendiente: limpiar

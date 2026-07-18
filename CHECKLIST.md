@@ -125,14 +125,21 @@
 - [ ] (Opcional) TWA Android si hace falta (ver `TWA.md`)
 - [ ] (Opcional) Forzar HTTPS cuando GitHub emita el cert del subdominio
 
-## 2. Refactor `vault.dotrino.com/pair` (emparejador self independiente) — HECHO
+## 2. Emparejador self — SUPERSEDED (migrado al iframe de identity)
 
-> Implementado (2026-07-16). El modo "este dispositivo como vault" + el emparejamiento
+> **Histórico (2026-07-16):** el modo "este dispositivo como vault" + el emparejamiento
 > de agentes se centralizaron en `vault.dotrino.com/pair` (multi-page Vite en
-> `dotrino-vault/web/`). ia y terminal derivan su botón self ahí. Detalle en `PLAN.md` §13.
+> `dotrino-vault/web/`).
+>
+> **Superseeded (2026-07-18):** `/pair` fue eliminado. El daemon device-vault ahora
+> vive dentro del **iframe de identity** (`id.dotrino.com`), y la UI de gestión está en
+> **`profile.dotrino.com/#myvault`** (activar, QR+SAS, listar/revocar). ia y terminal
+> derivan su botón self a `profile.dotrino.com/?back=<origin>#myvault`. Detalle del
+> pivot en `PLAN.md` §13 y commits en `dotrino-identity` (fases 1-3), `dotrino_profile`
+> (fase 3), `dotrino-ia`/`dotrino-terminal` (fase 4) y `dotrino-vault` (fase 5: borrado).
 
-- [x] `vault.dotrino.com/pair`: nueva ruta — `startDeviceVault` + QR + aprobación SAS + listado de dispositivos + redirect `?back=<url>` (commit `3aa1384` en dotrino-vault, build OK)
-- [x] `dotrino-ia`: el botón "este dispositivo como vault" abre `vault.dotrino.com/pair?back=<origin>` (commit `025c593`)
-- [x] `dotrino-terminal`: el botón self deriva a `…?back=<origin>` (commit `6d7481a`; **`selfTerminalScreen` quedó como código muerto — deuda: eliminar cuando se verifique E2E**)
-- [ ] Documentar en `CLAUDE.md`/`CONVENCIONES-APPS` que el emparejamiento self vive en `vault.dotrino.com/pair` (regla del ecosistema)
-- [ ] Verificación E2E del dueño: en ia/terminal elegir self → abre /pair → enlaza agente → vuelve y lo ve
+- [x] ~~`vault.dotrino.com/pair`~~ → eliminado (fase 5). La UI equivalente vive en `profile.dotrino.com/#myvault`.
+- [x] ~~`dotrino-ia`: botón self abre `/pair`~~ → ahora abre `profile.dotrino.com/#myvault` (fase 4).
+- [x] ~~`dotrino-terminal`: botón self deriva a `/pair`~~ → ahora a `profile.dotrino.com/#myvault` (fase 4).
+- [x] El daemon self-vault ya NO requiere mantener `vault.dotrino.com/pair` abierta: vive en el iframe de identity (`navigator.locks` por pestaña visible).
+- [ ] Verificación E2E del dueño: en ia/terminal elegir self → abre `profile.dotrino.com/#myvault` → activa + enlaza agente → vuelve y lo ve.
