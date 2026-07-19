@@ -1,0 +1,4 @@
+# Secretos y estado local del contenedor — NUNCA commitear.
+.env
+data/
+workspace/

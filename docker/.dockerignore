@@ -1,0 +1,4 @@
+# No enviar secretos ni estado local al daemon en el build (la imagen no los usa).
+.env
+data/
+workspace/

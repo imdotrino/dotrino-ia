@@ -1,0 +1,17 @@
+# Dotrino IA — agente aislado en Docker (opcional). Ver README.md.
+#
+# Primero enrola UNA vez (interactivo), luego levanta en segundo plano:
+#   docker compose run --rm -it ia-agent enroll
+#   docker compose up -d
+services:
+  ia-agent:
+    build: .
+    # Alternativa sin build local: usa una imagen ya construida.
+    # image: dotrino-ia-agent
+    env_file: .env            # tu token de Claude (ver .env.example)
+    volumes:
+      - ./data:/data          # enlace al vault (persiste el enrolamiento)
+      # Monta AQUÍ el proyecto que quieres que la IA pueda tocar (y solo ese):
+      - ./workspace:/workspace
+    restart: unless-stopped
+    # Sin puertos: el agente sale hacia el proxy del ecosistema, no escucha nada.
