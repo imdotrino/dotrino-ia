@@ -20,12 +20,26 @@ Sí: **pones el token de Claude en un `.env`** y el contenedor lo usa. Dos forma
 | `ANTHROPIC_API_KEY` | La **API** de Anthropic (pago por uso) | Una clave del [Console](https://platform.claude.com). Se factura aparte. |
 
 ```sh
+cd dotrino-ia/docker      # trabaja desde esta carpeta
 cp .env.example .env
-$EDITOR .env      # pega tu CLAUDE_CODE_OAUTH_TOKEN (o ANTHROPIC_API_KEY)
+$EDITOR .env              # pega tu CLAUDE_CODE_OAUTH_TOKEN (o ANTHROPIC_API_KEY)
 ```
 
-El `.env` está en `.gitignore`: **no lo subas**. No se hornea en la imagen; se inyecta
-en runtime.
+### ¿Dónde va el `.env`?
+
+Lo lee **Docker** (no el agente ni `claude`): Docker lo lee en el host e **inyecta las
+variables** al proceso del contenedor. El archivo se queda en el host y **no** se copia
+a la imagen. Dónde ponerlo depende de cómo lances:
+
+- **Con `docker compose`** (lo normal aquí): `env_file: .env` se resuelve **relativo al
+  `docker-compose.yml`**, así que el `.env` va **junto al compose**, es decir en esta
+  carpeta `docker/`. Corre `docker compose …` desde aquí.
+- **Con `docker run --env-file .env`**: la ruta es **relativa a la carpeta desde donde
+  corres el comando**. Ponlo ahí, o pasa una ruta absoluta: `--env-file /ruta/.env`.
+- **Sin Docker (`npx @dotrino/ia-agent`)**: no hay `.env` automático; exporta las
+  variables (`export CLAUDE_CODE_OAUTH_TOKEN=…` o `CLAUDE_CODE_OAUTH_TOKEN=… npx …`).
+
+El `.env` está en `.gitignore`/`.dockerignore`: **no lo subas** ni al repo ni al daemon.
 
 ## 2. Construir
 
