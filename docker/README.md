@@ -7,7 +7,20 @@ anfitrión. **El contenedor es la frontera de aislamiento**, por eso aquí es ac
 correr Claude en modo "sin preguntar permisos" (`--dangerously-skip-permissions`).
 
 > Es **opcional**. Si no te importa aislar, el camino normal sigue siendo
-> `npx @dotrino/ia-agent` en tu máquina (ver el README del repo).
+> `npx @dotrino/ia-agent` en tu máquina.
+
+## Obtén los archivos (SIN clonar el repo)
+
+Un comando deja el andamiaje en tu carpeta (no hace falta clonar nada):
+
+```sh
+npx @dotrino/ia-agent init-docker            # en la carpeta actual
+# o en otra:  npx @dotrino/ia-agent init-docker mi-ia   &&   cd mi-ia
+```
+
+Crea `Dockerfile`, `docker-compose.yml`, `.env.example`, `.gitignore`, `.dockerignore`
+(con la versión del agente ya pineada) y las carpetas `data/` y `workspace/`. No pisa
+archivos existentes salvo que pases `--force`.
 
 ## Qué necesitas y cuándo
 
@@ -15,68 +28,41 @@ correr Claude en modo "sin preguntar permisos" (`--dangerously-skip-permissions`
 vault, Claude ni se toca. El enroll **produce** `./data/link.json` — ese es el artefacto
 "ya enrolado" que el contenedor consume después.
 
-| Archivo | ¿Para enrolar? | ¿Para correr? |
-|---|---|---|
-| Node + el código de `profile.dotrino.com/myvault` | ✅ (es todo lo que hace falta) | — |
-| `./data/link.json` | ❌ lo **produce** el enroll | ✅ montado en `/data` |
-| `.env` (token de Claude) | ❌ el enroll no lo usa | ✅ |
-| `Dockerfile` + `docker-compose.yml` | ❌\* | ✅ (build + up) |
-| tu carpeta de proyecto (→ `/workspace`) | ❌ | ✅ |
+| Archivo | ¿Quién lo crea? | ¿Para enrolar? | ¿Para correr? |
+|---|---|---|---|
+| `Dockerfile`, `docker-compose.yml`, `.env.example` | `init-docker` | ❌ | ✅ |
+| `.env` (token de Claude) | tú (`cp .env.example .env`) | ❌ | ✅ |
+| `./data/link.json` | **el enroll** | ❌ lo produce | ✅ montado en `/data` |
+| tu proyecto (→ `/workspace`) | tú | ❌ | ✅ |
 
-Orden real: **1)** enrolar → produce `link.json` · **2)** poner el token en `.env` ·
-**3)** `docker compose up -d`.
+Orden real: **0)** `init-docker` · **1)** enrolar → `link.json` · **2)** token en `.env`
+· **3)** `docker compose up -d`.
 
-\* Salvo que enroles con un contenedor de una sola vez (ver §3): ahí sí necesitas antes
-el `Dockerfile` + `docker-compose.yml` y que exista un `.env` (aunque vacío), porque
-Compose exige que el `env_file` exista para arrancar.
+## 1. Token de Claude (`.env`)
 
-## 1. Autenticar Claude (el token va en `.env`)
-
-Sí: **pones el token de Claude en un `.env`** y el contenedor lo usa. Dos formas
-(elige una), ambas en [`.env.example`](./.env.example):
+Lo lee **Docker** (no el agente ni `claude`) y lo inyecta al contenedor. Elige una
+forma, ambas en `.env.example`:
 
 | Variable | Qué usa | Cómo la obtienes |
 |---|---|---|
-| `CLAUDE_CODE_OAUTH_TOKEN` | Tu **suscripción** Claude (Pro/Max/Team) | En tu máquina (con Claude Code ya logueado): `claude setup-token` → pega el token. Dura ~1 año. |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Tu **suscripción** Claude (Pro/Max/Team) | En tu máquina (con Claude Code logueado): `claude setup-token`. Dura ~1 año. |
 | `ANTHROPIC_API_KEY` | La **API** de Anthropic (pago por uso) | Una clave del [Console](https://platform.claude.com). Se factura aparte. |
 
 ```sh
-cd dotrino-ia/docker      # trabaja desde esta carpeta
 cp .env.example .env
-$EDITOR .env              # pega tu CLAUDE_CODE_OAUTH_TOKEN (o ANTHROPIC_API_KEY)
+$EDITOR .env      # pega tu CLAUDE_CODE_OAUTH_TOKEN (o ANTHROPIC_API_KEY)
 ```
 
-### ¿Dónde va el `.env`?
+El `.env` está en `.gitignore`/`.dockerignore`: **no lo subas**. Con `docker compose`,
+va **junto al `docker-compose.yml`**; con `docker run --env-file .env`, relativo a donde
+corres el comando.
 
-Lo lee **Docker** (no el agente ni `claude`): Docker lo lee en el host e **inyecta las
-variables** al proceso del contenedor. El archivo se queda en el host y **no** se copia
-a la imagen. Dónde ponerlo depende de cómo lances:
-
-- **Con `docker compose`** (lo normal aquí): `env_file: .env` se resuelve **relativo al
-  `docker-compose.yml`**, así que el `.env` va **junto al compose**, es decir en esta
-  carpeta `docker/`. Corre `docker compose …` desde aquí.
-- **Con `docker run --env-file .env`**: la ruta es **relativa a la carpeta desde donde
-  corres el comando**. Ponlo ahí, o pasa una ruta absoluta: `--env-file /ruta/.env`.
-- **Sin Docker (`npx @dotrino/ia-agent`)**: no hay `.env` automático; exporta las
-  variables (`export CLAUDE_CODE_OAUTH_TOKEN=…` o `CLAUDE_CODE_OAUTH_TOKEN=… npx …`).
-
-El `.env` está en `.gitignore`/`.dockerignore`: **no lo subas** ni al repo ni al daemon.
-
-## 2. Construir
-
-```sh
-docker compose build
-# o sin compose:  docker build -t dotrino-ia-agent .
-```
-
-## 3. Enrolar AFUERA (una vez) — el contenedor solo CORRE
+## 2. Enrola AFUERA (una vez) — el contenedor solo CORRE
 
 Enrolar es interactivo (pegas un código y apruebas en el navegador), así que se hace
 **fuera del contenedor** y al contenedor le entra el `link.json` **ya enrolado** por el
 volumen `./data`. El agente **nunca** enrola dentro de Docker: si levantas sin
 `link.json`, avisa y sale (no se cuelga).
-
-En tu máquina (solo necesita Node; `npx` no instala nada permanente):
 
 ```sh
 npx @dotrino/ia-agent enroll --enroll-only --dir ./data
@@ -88,19 +74,16 @@ emparejamiento"), o con `dotrino-vault pair` si tienes vault en un PC. El agente
 un **código SAS** que escribes en `profile.dotrino.com/myvault` para aprobar. Al
 aprobar, `--enroll-only` guarda `./data/link.json` y **sale**.
 
-> `link.json` contiene la **clave de este dispositivo**: es el artefacto "ya enrolado" y
-> lo único que el contenedor necesita para ser "esta máquina" en tu vault. Trátalo como
-> un secreto (ya está en `.gitignore`/`.dockerignore`).
+> `link.json` contiene la **clave de este dispositivo**: trátalo como un secreto (ya
+> está en `.gitignore`/`.dockerignore`).
 >
-> ¿No tienes Node en tu máquina? Enrola con un contenedor de una sola vez (con terminal,
-> `-it`): `docker compose run --rm -it ia-agent enroll --enroll-only`. Escribe igual a
-> `./data/link.json`.
+> ¿No tienes Node? Enrola con un contenedor de una sola vez (con terminal, `-it`):
+> `docker compose run --rm -it ia-agent enroll --enroll-only`. Escribe igual a `./data/link.json`.
 
-## 4. Correr (usa el link ya enrolado)
+## 3. Correr (usa el link ya enrolado)
 
-Edita [`docker-compose.yml`](./docker-compose.yml) y apunta el volumen `/workspace`
-**al proyecto que quieres que la IA pueda tocar** (por defecto `./workspace`). El
-`./data` con tu `link.json` ya está montado.
+Edita `docker-compose.yml` y apunta el volumen `/workspace` **al proyecto que quieres
+que la IA pueda tocar** (por defecto `./workspace`).
 
 ```sh
 docker compose up -d
@@ -113,9 +96,6 @@ La máquina aparece sola en `https://ia.dotrino.com` para chatear con ella.
 
 ```sh
 docker build -t dotrino-ia-agent .
-# 1) enrolar AFUERA (produce ./data/link.json)
-npx @dotrino/ia-agent enroll --enroll-only --dir ./data
-# 2) correr (solo corre; usa el link)
 docker run -d --restart unless-stopped --name ia-agent --env-file .env \
   -v "$PWD/data:/data" -v "/ruta/a/tu/proyecto:/workspace" \
   dotrino-ia-agent
@@ -132,18 +112,18 @@ docker run -d --restart unless-stopped --name ia-agent --env-file .env \
 **Ojo (límites honestos):**
 - **`/workspace` es totalmente escribible por la IA** — es a propósito, es lo que edita.
   Monta solo lo que estés dispuesto a que cambie.
-- El contenedor **tiene salida a la red** (la necesita para el proxy y para Anthropic),
-  así que la IA puede hacer llamadas de red. Restringir eso requiere políticas de red
-  aparte (fuera de este alcance).
+- El contenedor **tiene salida a la red** (la necesita para el proxy y para Anthropic).
+  Restringir eso requiere políticas de red aparte (fuera de este alcance).
 - El **token del `.env`** da acceso a tu cuenta/plan de Claude (y facturación, si es API
   key). Cuídalo como cualquier secreto.
-- **No** montes el socket de Docker ni corras el contenedor como `--privileged`: eso
-  rompería el aislamiento.
+- **No** montes el socket de Docker ni corras el contenedor como `--privileged`.
 
 ## Actualizar
 
-Las versiones de Claude Code y del agente están pineadas en el `Dockerfile`
-(`ARG CLAUDE_VERSION`, `ARG IA_AGENT_VERSION`). Para actualizar, súbelas y reconstruye:
+Las versiones de Claude Code y del agente están pineadas en el `Dockerfile` (`ARG
+CLAUDE_VERSION`, `ARG IA_AGENT_VERSION`). Para actualizar, súbelas y reconstruye
+(o vuelve a correr `init-docker --force` para regenerar el `Dockerfile` con la última
+versión del agente):
 
 ```sh
 docker compose build --build-arg CLAUDE_VERSION=latest

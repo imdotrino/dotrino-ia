@@ -5,8 +5,9 @@
 # proyecto en /workspace y el enlace al vault en /data. El contenedor ES la frontera
 # de aislamiento — por eso aquí es aceptable el modo "sin preguntar permisos".
 #
-# Build:   docker build -t dotrino-ia-agent ./docker
-# Ver el README de esta carpeta para enrolar y correr.
+# Generado por `dotrino-ia-agent init-docker`.
+# Build:   docker compose build   (o: docker build -t dotrino-ia-agent .)
+# Guía:    https://github.com/imdotrino/dotrino-ia/tree/main/docker
 
 FROM node:22-bookworm-slim
 
@@ -18,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Versión de Claude Code (pineada para builds reproducibles; override con
 # --build-arg CLAUDE_VERSION=latest). El agente de Dotrino IA va pineado exacto.
 ARG CLAUDE_VERSION=2.1.215
-ARG IA_AGENT_VERSION=0.3.4
+ARG IA_AGENT_VERSION=__IA_AGENT_VERSION__
 RUN npm install -g --no-fund \
       "@anthropic-ai/claude-code@${CLAUDE_VERSION}" \
       "@dotrino/ia-agent@${IA_AGENT_VERSION}"

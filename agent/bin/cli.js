@@ -11,6 +11,7 @@
  * (Claude, OpenCode…). Con un solo comando queda enlazado y sirviendo.
  */
 import readline from 'node:readline'
+import path from 'node:path'
 import { startIaAgent } from '../index.js'
 import { enroll, parseQr, loadLink, dataDir } from '@dotrino/remote-agent/link'
 
@@ -29,12 +30,35 @@ if (args.includes('-h') || args.includes('--help')) {
   dotrino-ia-agent enroll                re-enlaza (sobrescribe) y corre el agente
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
                                          aparte, p. ej. dentro de Docker)
-  opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>]
+  dotrino-ia-agent init-docker [dir]     escribe el andamiaje Docker (Dockerfile, compose,
+                                         .env.example) para correr el agente AISLADO, sin
+                                         clonar el repo. [dir] por defecto: el actual
+  opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>] [--force]
 
 Sin terminal interactiva (Docker -d, systemd, pm2): enrolar no se puede. Si ya hay
 enlace, corre; si no, avisa y sale. Enrola antes en una terminal y monta el link.json.
 
 datos en ${dataDir('dotrino-ia-agent')} (override DOTRINO_REMOTE_AGENT_DIR)`)
+  process.exit(0)
+}
+
+// `init-docker [dir]`: escribe el andamiaje Docker sin clonar el repo, y SALE.
+if (cmd === 'init-docker') {
+  const target = (args[1] && !args[1].startsWith('-')) ? args[1] : (opt('--dir') || '.')
+  const { scaffold } = await import('../init-docker.js')
+  const { written, skipped, dirs, targetDir, version } = scaffold(target, { force: args.includes('--force') })
+  console.log(`Andamiaje Docker de Dotrino IA (agente ${version}) en ${path.resolve(targetDir)}\n`)
+  if (written.length) console.log('  creados:   ' + written.join(', '))
+  if (skipped.length) console.log('  omitidos (ya existían; usa --force para sobrescribir):   ' + skipped.join(', '))
+  console.log('  carpetas:  ' + dirs.map((d) => d + '/').join(', '))
+  console.log(`
+Siguientes pasos${targetDir === '.' ? '' : ` (desde ${targetDir}/)`}:
+  1) Pon tu token de Claude:  cp .env.example .env  &&  edita .env
+  2) Enrola AFUERA (produce ./data/link.json):
+       npx @dotrino/ia-agent enroll --enroll-only --dir ./data
+  3) Apunta el volumen ./workspace a tu proyecto en docker-compose.yml
+  4) Corre:  docker compose up -d
+`)
   process.exit(0)
 }
 

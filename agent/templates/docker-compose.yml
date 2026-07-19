@@ -1,4 +1,6 @@
-# Dotrino IA — agente aislado en Docker (opcional). Ver README.md.
+# Dotrino IA — agente aislado en Docker (opcional).
+# Generado por `dotrino-ia-agent init-docker`. Guía:
+#   https://github.com/imdotrino/dotrino-ia/tree/main/docker
 #
 # El enrolamiento (interactivo, con navegador) se hace AFUERA, y al contenedor le
 # entra el link.json ya enrolado por el volumen ./data:
