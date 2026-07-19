@@ -9,6 +9,27 @@ correr Claude en modo "sin preguntar permisos" (`--dangerously-skip-permissions`
 > Es **opcional**. Si no te importa aislar, el camino normal sigue siendo
 > `npx @dotrino/ia-agent` en tu máquina (ver el README del repo).
 
+## Qué necesitas y cuándo
+
+**Enrolar no necesita ningún archivo previo** (ni el `.env`): es solo el enlace al
+vault, Claude ni se toca. El enroll **produce** `./data/link.json` — ese es el artefacto
+"ya enrolado" que el contenedor consume después.
+
+| Archivo | ¿Para enrolar? | ¿Para correr? |
+|---|---|---|
+| Node + el código de `profile.dotrino.com/myvault` | ✅ (es todo lo que hace falta) | — |
+| `./data/link.json` | ❌ lo **produce** el enroll | ✅ montado en `/data` |
+| `.env` (token de Claude) | ❌ el enroll no lo usa | ✅ |
+| `Dockerfile` + `docker-compose.yml` | ❌\* | ✅ (build + up) |
+| tu carpeta de proyecto (→ `/workspace`) | ❌ | ✅ |
+
+Orden real: **1)** enrolar → produce `link.json` · **2)** poner el token en `.env` ·
+**3)** `docker compose up -d`.
+
+\* Salvo que enroles con un contenedor de una sola vez (ver §3): ahí sí necesitas antes
+el `Dockerfile` + `docker-compose.yml` y que exista un `.env` (aunque vacío), porque
+Compose exige que el `env_file` exista para arrancar.
+
 ## 1. Autenticar Claude (el token va en `.env`)
 
 Sí: **pones el token de Claude en un `.env`** y el contenedor lo usa. Dos formas
