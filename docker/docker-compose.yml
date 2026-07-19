@@ -1,8 +1,9 @@
 # Dotrino IA — agente aislado en Docker (opcional). Ver README.md.
 #
-# Primero enrola UNA vez (interactivo), luego levanta en segundo plano:
-#   docker compose run --rm -it ia-agent enroll
-#   docker compose up -d
+# El enrolamiento (interactivo, con navegador) se hace AFUERA, y al contenedor le
+# entra el link.json ya enrolado por el volumen ./data:
+#   npx @dotrino/ia-agent enroll --enroll-only --dir ./data   # 1) enrola afuera
+#   docker compose up -d                                      # 2) el contenedor SOLO corre
 services:
   ia-agent:
     build: .

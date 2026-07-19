@@ -48,25 +48,38 @@ docker compose build
 # o sin compose:  docker build -t dotrino-ia-agent .
 ```
 
-## 3. Enlazar al vault (UNA vez, interactivo)
+## 3. Enrolar AFUERA (una vez) — el contenedor solo CORRE
 
-El agente es un dispositivo de tu vault. Enrólalo una vez; el enlace queda en el
-volumen `./data` y no se repite.
+Enrolar es interactivo (pegas un código y apruebas en el navegador), así que se hace
+**fuera del contenedor** y al contenedor le entra el `link.json` **ya enrolado** por el
+volumen `./data`. El agente **nunca** enrola dentro de Docker: si levantas sin
+`link.json`, avisa y sale (no se cuelga).
+
+En tu máquina (solo necesita Node; `npx` no instala nada permanente):
 
 ```sh
-docker compose run --rm -it ia-agent enroll
+npx @dotrino/ia-agent enroll --enroll-only --dir ./data
 ```
 
 Te pedirá el **código de emparejamiento**: lo generas en
 `https://profile.dotrino.com/myvault` ("Activar como bóveda" → "Generar código de
-emparejamiento"), o con `dotrino-vault pair` si tienes vault en un PC. Luego el agente
-muestra un **código SAS** que escribes en `profile.dotrino.com/myvault` para aprobarlo.
+emparejamiento"), o con `dotrino-vault pair` si tienes vault en un PC. El agente muestra
+un **código SAS** que escribes en `profile.dotrino.com/myvault` para aprobar. Al
+aprobar, `--enroll-only` guarda `./data/link.json` y **sale**.
 
-## 4. Correr
+> `link.json` contiene la **clave de este dispositivo**: es el artefacto "ya enrolado" y
+> lo único que el contenedor necesita para ser "esta máquina" en tu vault. Trátalo como
+> un secreto (ya está en `.gitignore`/`.dockerignore`).
+>
+> ¿No tienes Node en tu máquina? Enrola con un contenedor de una sola vez (con terminal,
+> `-it`): `docker compose run --rm -it ia-agent enroll --enroll-only`. Escribe igual a
+> `./data/link.json`.
 
-Antes de levantar, edita [`docker-compose.yml`](./docker-compose.yml) y apunta el
-volumen de `/workspace` **al proyecto que quieres que la IA pueda tocar** (por defecto
-`./workspace`).
+## 4. Correr (usa el link ya enrolado)
+
+Edita [`docker-compose.yml`](./docker-compose.yml) y apunta el volumen `/workspace`
+**al proyecto que quieres que la IA pueda tocar** (por defecto `./workspace`). El
+`./data` con tu `link.json` ya está montado.
 
 ```sh
 docker compose up -d
@@ -79,11 +92,9 @@ La máquina aparece sola en `https://ia.dotrino.com` para chatear con ella.
 
 ```sh
 docker build -t dotrino-ia-agent .
-# enrolar (una vez)
-docker run --rm -it --env-file .env \
-  -v "$PWD/data:/data" -v "/ruta/a/tu/proyecto:/workspace" \
-  dotrino-ia-agent enroll
-# correr
+# 1) enrolar AFUERA (produce ./data/link.json)
+npx @dotrino/ia-agent enroll --enroll-only --dir ./data
+# 2) correr (solo corre; usa el link)
 docker run -d --restart unless-stopped --name ia-agent --env-file .env \
   -v "$PWD/data:/data" -v "/ruta/a/tu/proyecto:/workspace" \
   dotrino-ia-agent

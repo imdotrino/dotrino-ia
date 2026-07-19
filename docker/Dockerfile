@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Versión de Claude Code (pineada para builds reproducibles; override con
 # --build-arg CLAUDE_VERSION=latest). El agente de Dotrino IA va pineado exacto.
 ARG CLAUDE_VERSION=2.1.215
-ARG IA_AGENT_VERSION=0.3.3
+ARG IA_AGENT_VERSION=0.3.4
 RUN npm install -g --no-fund \
       "@anthropic-ai/claude-code@${CLAUDE_VERSION}" \
       "@dotrino/ia-agent@${IA_AGENT_VERSION}"

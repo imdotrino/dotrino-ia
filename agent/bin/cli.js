@@ -25,9 +25,14 @@ function ask (q) {
 
 if (args.includes('-h') || args.includes('--help')) {
   console.log(`uso:
-  dotrino-ia-agent            enlaza esta máquina (si falta) y corre el agente
-  dotrino-ia-agent enroll     re-enlaza (sobrescribe el enlace) y corre el agente
+  dotrino-ia-agent                       enlaza esta máquina (si falta) y corre el agente
+  dotrino-ia-agent enroll                re-enlaza (sobrescribe) y corre el agente
+  dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
+                                         aparte, p. ej. dentro de Docker)
   opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>]
+
+Sin terminal interactiva (Docker -d, systemd, pm2): enrolar no se puede. Si ya hay
+enlace, corre; si no, avisa y sale. Enrola antes en una terminal y monta el link.json.
 
 datos en ${dataDir('dotrino-ia-agent')} (override DOTRINO_REMOTE_AGENT_DIR)`)
   process.exit(0)
@@ -55,18 +60,35 @@ async function doEnroll (dir, label) {
       console.log('  Esperando aprobación…')
     }
   })
-  console.log('\n  ✓ Máquina enlazada — levantando el agente…\n')
+  console.log('\n  ✓ Máquina enlazada.\n')
 }
 
 try {
   const dir = opt('--dir')
   const label = opt('--label') || 'ia-agent'
+  const enrollOnly = args.includes('--enroll-only')
   // El comando por defecto enrola SOLO si aún no está enlazada; `enroll` fuerza
-  // re-enrolar (sobrescribe) aunque ya lo esté. En ambos casos, al terminar sigue
-  // y LEVANTA el servicio.
+  // re-enrolar (sobrescribe) aunque ya lo esté.
   if (cmd === 'enroll' || !loadLink(dir)) {
+    // Enrolar es INTERACTIVO (pegas el código y apruebas el SAS): necesita una
+    // terminal. Sin TTY (Docker -d, systemd, pm2) no se puede: en vez de colgarse
+    // leyendo un stdin inexistente, avisamos y salimos. El modelo correcto para
+    // Docker es enrolar AFUERA y montar el link.json ya enrolado.
+    if (!process.stdin.isTTY) {
+      console.error('No estás enrolado y no hay terminal interactiva para hacerlo.')
+      console.error('Enrola antes en una terminal y monta el link.json resultante:')
+      console.error('  npx @dotrino/ia-agent enroll --enroll-only --dir <carpeta>')
+      console.error(`El enlace vive en ${dataDir('dotrino-ia-agent')} (o DOTRINO_REMOTE_AGENT_DIR); monta esa carpeta en el contenedor.`)
+      process.exit(1)
+    }
     if (cmd === 'enroll' && loadLink(dir)) console.log('Re-enlazando esta máquina (sobrescribe el enlace actual).\n')
     await doEnroll(dir, label)
+    // `--enroll-only`: enrola y SALE (para producir el link afuera y correrlo aparte).
+    if (enrollOnly) {
+      console.log('  Listo: el enlace quedó guardado. Ya puedes correr el agente con ese link.json (p. ej. dentro de Docker).\n')
+      process.exit(0)
+    }
+    console.log('  Levantando el agente…\n')
   }
 
   const agent = await startIaAgent({
