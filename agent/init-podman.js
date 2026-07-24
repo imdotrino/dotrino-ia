@@ -1,11 +1,11 @@
 /**
- * init-docker.js — genera el andamiaje Docker (opcional) para correr el agente
- * AISLADO, sin clonar el repo. Lo usa el comando `dotrino-ia-agent init-docker`.
+ * init-podman.js — genera el andamiaje Podman (opcional) para correr el agente
+ * AISLADO, sin clonar el repo. Lo usa el comando `dotrino-ia-agent init-podman`.
  *
  * Copia las plantillas de `templates/` al directorio destino con sus nombres reales
- * (con punto), inyecta la versión de ESTE agente en el Dockerfile, y crea las
- * carpetas de volúmenes `data/` y `workspace/` (así Docker no las crea como root).
- * No pisa archivos existentes salvo `--force`.
+ * (con punto), inyecta la versión de ESTE agente en el Containerfile, y crea las
+ * carpetas de volúmenes `data/` y `workspace/` (así Podman no las crea con otro
+ * dueño). No pisa archivos existentes salvo `--force`.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -20,13 +20,13 @@ function agentVersion () {
 
 // plantilla en templates/  →  nombre real que se escribe en el destino
 const FILES = {
-  Dockerfile: 'Dockerfile',
-  'docker-compose.yml': 'docker-compose.yml',
+  Containerfile: 'Containerfile',
+  'compose.yaml': 'compose.yaml',
   'env.example': '.env.example',
   gitignore: '.gitignore',
-  dockerignore: '.dockerignore'
+  containerignore: '.containerignore'
 }
-const DIRS = ['data', 'workspace'] // volúmenes montados (evita que Docker los cree como root)
+const DIRS = ['data', 'workspace'] // volúmenes montados
 
 /**
  * Escribe el andamiaje en `targetDir`.

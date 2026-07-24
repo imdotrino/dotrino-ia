@@ -5,9 +5,9 @@
 # proyecto en /workspace y el enlace al vault en /data. El contenedor ES la frontera
 # de aislamiento — por eso aquí es aceptable el modo "sin preguntar permisos".
 #
-# Generado por `dotrino-ia-agent init-docker`.
-# Build:   docker compose build   (o: docker build -t dotrino-ia-agent .)
-# Guía:    https://github.com/imdotrino/dotrino-ia/tree/main/docker
+# Generado por `dotrino-ia-agent init-podman`. Pensado para Podman (rootless, sin
+# daemon); ver el README de la carpeta generada para el flujo completo.
+# Build:   podman build -t dotrino-ia-agent .
 
 FROM node:22-bookworm-slim
 
@@ -26,6 +26,9 @@ RUN npm install -g --no-fund \
 
 # Usuario NO root: `claude --dangerously-skip-permissions` se niega a correr como
 # root por seguridad. La imagen `node` ya trae el usuario 'node' (uid 1000): lo usamos.
+# Con Podman rootless + `--userns=keep-id` (ver README), este uid 1000 termina siendo
+# TU propio usuario en el host: los archivos que la IA cree en los volúmenes quedan
+# con tu dueño, no root ni un uid remapeado ilegible.
 RUN mkdir -p /workspace /data && chown -R node:node /workspace /data
 USER node
 ENV HOME=/home/node

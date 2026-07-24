@@ -1,6 +1,6 @@
 {
   "name": "@dotrino/ia-agent",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "description": "Agente de Dotrino IA: expone tus CLIs de IA (Claude, OpenCode) al chat remoto de ia.dotrino.com, vía @dotrino/remote-agent.",
   "type": "module",
   "bin": {
@@ -11,7 +11,7 @@
   },
   "files": [
     "index.js",
-    "init-docker.js",
+    "init-podman.js",
     "bin",
     "drivers",
     "templates"

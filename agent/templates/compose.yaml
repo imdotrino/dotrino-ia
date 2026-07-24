@@ -1,0 +1,29 @@
+# Dotrino IA — agente aislado en Podman (opcional).
+# Generado por `dotrino-ia-agent init-podman`. Guía completa en el README de esta
+# carpeta (flujo, límites de aislamiento, alternativa sin compose).
+#
+# Requiere el SOCKET de Podman activo (una vez, no hace falta con `podman run` a
+# secas): systemctl --user enable --now podman.socket
+#
+# El enrolamiento (interactivo, con navegador) se hace AFUERA, y al contenedor le
+# entra el link.json ya enrolado por el volumen ./data:
+#   npx @dotrino/ia-agent enroll --enroll-only --dir ./data   # 1) enrola afuera
+#   podman compose up -d                                      # 2) el contenedor SOLO corre
+services:
+  ia-agent:
+    build:
+      context: .
+      dockerfile: Containerfile
+    # Alternativa sin build local: usa una imagen ya construida.
+    # image: dotrino-ia-agent
+    # Rootless: mapea TU usuario del host 1:1 con el 'node' (uid 1000) de dentro —
+    # sin esto, el contenedor no puede escribir en ./data/./workspace (Permission
+    # denied) y los archivos que cree quedan con un uid remapeado ilegible.
+    userns_mode: keep-id
+    env_file: .env            # tu token de Claude (ver .env.example)
+    volumes:
+      - ./data:/data          # enlace al vault (persiste el enrolamiento)
+      # Monta AQUÍ el proyecto que quieres que la IA pueda tocar (y solo ese):
+      - ./workspace:/workspace
+    restart: unless-stopped
+    # Sin puertos: el agente sale hacia el proxy del ecosistema, no escucha nada.

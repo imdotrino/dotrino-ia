@@ -29,25 +29,26 @@ if (args.includes('-h') || args.includes('--help')) {
   dotrino-ia-agent                       enlaza esta máquina (si falta) y corre el agente
   dotrino-ia-agent enroll                re-enlaza (sobrescribe) y corre el agente
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
-                                         aparte, p. ej. dentro de Docker)
-  dotrino-ia-agent init-docker [dir]     escribe el andamiaje Docker (Dockerfile, compose,
-                                         .env.example) para correr el agente AISLADO, sin
-                                         clonar el repo. [dir] por defecto: el actual
+                                         aparte, p. ej. dentro de un contenedor)
+  dotrino-ia-agent init-podman [dir]     escribe el andamiaje Podman (Containerfile,
+                                         compose.yaml, .env.example) para correr el
+                                         agente AISLADO, sin clonar el repo. [dir] por
+                                         defecto: el actual
   opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>] [--force]
 
-Sin terminal interactiva (Docker -d, systemd, pm2): enrolar no se puede. Si ya hay
+Sin terminal interactiva (contenedor -d, systemd, pm2): enrolar no se puede. Si ya hay
 enlace, corre; si no, avisa y sale. Enrola antes en una terminal y monta el link.json.
 
 datos en ${dataDir('dotrino-ia-agent')} (override DOTRINO_REMOTE_AGENT_DIR)`)
   process.exit(0)
 }
 
-// `init-docker [dir]`: escribe el andamiaje Docker sin clonar el repo, y SALE.
-if (cmd === 'init-docker') {
+// `init-podman [dir]`: escribe el andamiaje Podman sin clonar el repo, y SALE.
+if (cmd === 'init-podman') {
   const target = (args[1] && !args[1].startsWith('-')) ? args[1] : (opt('--dir') || '.')
-  const { scaffold } = await import('../init-docker.js')
+  const { scaffold } = await import('../init-podman.js')
   const { written, skipped, dirs, targetDir, version } = scaffold(target, { force: args.includes('--force') })
-  console.log(`Andamiaje Docker de Dotrino IA (agente ${version}) en ${path.resolve(targetDir)}\n`)
+  console.log(`Andamiaje Podman de Dotrino IA (agente ${version}) en ${path.resolve(targetDir)}\n`)
   if (written.length) console.log('  creados:   ' + written.join(', '))
   if (skipped.length) console.log('  omitidos (ya existían; usa --force para sobrescribir):   ' + skipped.join(', '))
   console.log('  carpetas:  ' + dirs.map((d) => d + '/').join(', '))
@@ -56,8 +57,12 @@ Siguientes pasos${targetDir === '.' ? '' : ` (desde ${targetDir}/)`}:
   1) Pon tu token de Claude:  cp .env.example .env  &&  edita .env
   2) Enrola AFUERA (produce ./data/link.json):
        npx @dotrino/ia-agent enroll --enroll-only --dir ./data
-  3) Apunta el volumen ./workspace a tu proyecto en docker-compose.yml
-  4) Corre:  docker compose up -d
+  3) Apunta el volumen ./workspace a tu proyecto en compose.yaml
+  4) Corre:  podman build -t dotrino-ia-agent . && podman run -d --restart unless-stopped \\
+       --userns=keep-id --name ia-agent --env-file .env \\
+       -v ./data:/data -v ./workspace:/workspace dotrino-ia-agent
+     (o, si prefieres compose: podman compose up -d — ver el README para el
+     socket que necesita)
 `)
   process.exit(0)
 }
@@ -95,9 +100,9 @@ try {
   // re-enrolar (sobrescribe) aunque ya lo esté.
   if (cmd === 'enroll' || !loadLink(dir)) {
     // Enrolar es INTERACTIVO (pegas el código y apruebas el SAS): necesita una
-    // terminal. Sin TTY (Docker -d, systemd, pm2) no se puede: en vez de colgarse
-    // leyendo un stdin inexistente, avisamos y salimos. El modelo correcto para
-    // Docker es enrolar AFUERA y montar el link.json ya enrolado.
+    // terminal. Sin TTY (contenedor -d, systemd, pm2) no se puede: en vez de
+    // colgarse leyendo un stdin inexistente, avisamos y salimos. El modelo correcto
+    // para contenedores es enrolar AFUERA y montar el link.json ya enrolado.
     if (!process.stdin.isTTY) {
       console.error('No estás enrolado y no hay terminal interactiva para hacerlo.')
       console.error('Enrola antes en una terminal y monta el link.json resultante:')
@@ -109,7 +114,7 @@ try {
     await doEnroll(dir, label)
     // `--enroll-only`: enrola y SALE (para producir el link afuera y correrlo aparte).
     if (enrollOnly) {
-      console.log('  Listo: el enlace quedó guardado. Ya puedes correr el agente con ese link.json (p. ej. dentro de Docker).\n')
+      console.log('  Listo: el enlace quedó guardado. Ya puedes correr el agente con ese link.json (p. ej. dentro de un contenedor).\n')
       process.exit(0)
     }
     console.log('  Levantando el agente…\n')
