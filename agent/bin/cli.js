@@ -30,10 +30,11 @@ if (args.includes('-h') || args.includes('--help')) {
   dotrino-ia-agent enroll                re-enlaza (sobrescribe) y corre el agente
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
                                          aparte, p. ej. dentro de un contenedor)
-  dotrino-ia-agent init-podman [dir]     escribe el andamiaje Podman (Containerfile,
+  dotrino-ia-agent init-podman [dir]     escribe el andamiaje PODMAN (Containerfile,
                                          compose.yaml, .env.example) para correr el
-                                         agente AISLADO, sin clonar el repo. [dir] por
-                                         defecto: el actual
+                                         agente AISLADO, sin clonar el repo (rootless,
+                                         sin daemon). [dir] por defecto: el actual
+  dotrino-ia-agent init-docker [dir]     ídem, para DOCKER (Dockerfile, docker-compose.yml)
   opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>] [--force]
 
 Sin terminal interactiva (contenedor -d, systemd, pm2): enrolar no se puede. Si ya hay
@@ -43,12 +44,9 @@ datos en ${dataDir('dotrino-ia-agent')} (override DOTRINO_REMOTE_AGENT_DIR)`)
   process.exit(0)
 }
 
-// `init-podman [dir]`: escribe el andamiaje Podman sin clonar el repo, y SALE.
-if (cmd === 'init-podman') {
-  const target = (args[1] && !args[1].startsWith('-')) ? args[1] : (opt('--dir') || '.')
-  const { scaffold } = await import('../init-podman.js')
-  const { written, skipped, dirs, targetDir, version } = scaffold(target, { force: args.includes('--force') })
-  console.log(`Andamiaje Podman de Dotrino IA (agente ${version}) en ${path.resolve(targetDir)}\n`)
+// `init-podman|init-docker [dir]`: escribe el andamiaje sin clonar el repo, y SALE.
+function printScaffold (engine, { written, skipped, dirs, targetDir, version }, runCmd) {
+  console.log(`Andamiaje ${engine} de Dotrino IA (agente ${version}) en ${path.resolve(targetDir)}\n`)
   if (written.length) console.log('  creados:   ' + written.join(', '))
   if (skipped.length) console.log('  omitidos (ya existían; usa --force para sobrescribir):   ' + skipped.join(', '))
   console.log('  carpetas:  ' + dirs.map((d) => d + '/').join(', '))
@@ -57,13 +55,30 @@ Siguientes pasos${targetDir === '.' ? '' : ` (desde ${targetDir}/)`}:
   1) Pon tu token de Claude:  cp .env.example .env  &&  edita .env
   2) Enrola AFUERA (produce ./data/link.json):
        npx @dotrino/ia-agent enroll --enroll-only --dir ./data
-  3) Apunta el volumen ./workspace a tu proyecto en compose.yaml
-  4) Corre:  podman build -t dotrino-ia-agent . && podman run -d --restart unless-stopped \\
+  3) Apunta el volumen ./workspace a tu proyecto en ${engine === 'Podman' ? 'compose.yaml' : 'docker-compose.yml'}
+  4) Corre:  ${runCmd}
+`)
+}
+
+if (cmd === 'init-podman' || cmd === 'init-docker') {
+  const target = (args[1] && !args[1].startsWith('-')) ? args[1] : (opt('--dir') || '.')
+  const force = args.includes('--force')
+  if (cmd === 'init-podman') {
+    const { scaffold } = await import('../init-podman.js')
+    printScaffold('Podman', scaffold(target, { force }),
+      `podman build -t dotrino-ia-agent . && podman run -d --restart unless-stopped \\
        --userns=keep-id --name ia-agent --env-file .env \\
        -v ./data:/data -v ./workspace:/workspace dotrino-ia-agent
      (o, si prefieres compose: podman compose up -d — ver el README para el
-     socket que necesita)
-`)
+     socket que necesita)`)
+  } else {
+    const { scaffold } = await import('../init-docker.js')
+    printScaffold('Docker', scaffold(target, { force }),
+      `docker compose up -d
+     (o sin compose: docker build -t dotrino-ia-agent . && docker run -d --restart
+     unless-stopped --name ia-agent --env-file .env -v ./data:/data
+     -v ./workspace:/workspace dotrino-ia-agent — ver el README)`)
+  }
   process.exit(0)
 }
 
