@@ -135,7 +135,7 @@
 > vive dentro del **iframe de identity** (`id.dotrino.com`), y la UI de gestión está en
 > **`profile.dotrino.com/#myvault`** (activar, QR+SAS, listar/revocar). ia y terminal
 > derivan su botón self a `profile.dotrino.com/?back=<origin>#myvault`. Detalle del
-> pivot en `PLAN.md` §13 y commits en `dotrino-identity` (fases 1-3), `dotrino_profile`
+> pivot en `PLAN.md` §13 y commits en `dotrino-identity` (fases 1-3), `dotrino-profile-app`
 > (fase 3), `dotrino-ia`/`dotrino-terminal` (fase 4) y `dotrino-vault` (fase 5: borrado).
 
 - [x] ~~`vault.dotrino.com/pair`~~ → eliminado (fase 5). La UI equivalente vive en `profile.dotrino.com/#myvault`.
