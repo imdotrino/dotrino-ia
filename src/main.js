@@ -14,6 +14,7 @@ import './style.css'
 import { identity, getLink, getSelfLink } from './vault.js'
 import { IaAgentClient } from './agentClient.js'
 import { listAgentsByLabel } from '@dotrino/remote-agent/discover'
+
 import { pubkeyId, avatarDataUri } from '@dotrino/identity/capabilities'
 import { createVaultReputation } from '@dotrino/reputation'
 
@@ -39,6 +40,8 @@ const I18N = {
     agents_title: 'Tus agentes', agents_sub: 'Máquinas con el agente IA enrolado a tu vault.',
     setup_title: 'Instala el agente en tu PC',
     setup_body: 'En la máquina donde corren tus proyectos, ejecuta:',
+    install_win: 'En Windows (PowerShell):',
+    install_alt: 'O, si ya tienes Node 20+:',
     setup_s1: 'Escanea el QR del vault con el agente y tipea el código de emparejamiento.',
     setup_s2: 'El agente aparece aquí automáticamente.',
     machine_checking: 'comprobando…', machine_online: 'en línea', machine_offline: 'desconectado',
@@ -63,6 +66,8 @@ const I18N = {
     agents_title: 'Your agents', agents_sub: 'Machines with the IA agent enrolled to your vault.',
     setup_title: 'Install the agent on your PC',
     setup_body: 'On the machine where your projects run, run:',
+    install_win: 'On Windows (PowerShell):',
+    install_alt: 'Or, if you already have Node 20+:',
     setup_s1: 'Scan the vault QR with the agent and type the pairing code.',
     setup_s2: 'The agent shows up here automatically.',
     machine_checking: 'checking…', machine_online: 'online', machine_offline: 'offline',
@@ -80,6 +85,21 @@ const t = (k, ...a) => { let s = I18N[lang][k] ?? k; a.forEach((x, i) => { s = s
 
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+// Comandos para instalar/correr el agente en la máquina destino. El one-liner curl/irm
+// (instalador universal del ecosistema, en install.dotrino.com) baja Node si falta →
+// «pega y ya»; npx queda como alternativa si ya lo tienes. Mismo instalador que usa
+// dotrino-terminal: solo cambia el paquete.
+const AGENT_PKG = '@dotrino/ia-agent'
+function installCmds () {
+  const sh = `curl -fsSL https://install.dotrino.com/install.sh | sh -s -- ${AGENT_PKG} enroll`
+  const ps = `& ([scriptblock]::Create((irm https://install.dotrino.com/install.ps1))) ${AGENT_PKG} enroll`
+  return `<pre><code>${esc(sh)}</code></pre>
+        <p class="status">${t('install_win')}</p>
+        <pre><code>${esc(ps)}</code></pre>
+        <p class="status">${t('install_alt')}</p>
+        <pre><code>npx ${AGENT_PKG} enroll</code></pre>`
+}
+
 
 const app = document.getElementById('app')
 
@@ -135,7 +155,7 @@ async function iaScreen (link) {
       box.innerHTML = `<p class="status">${t('agents_none')}</p>
         <div class="setup"><b>${t('setup_title')}</b>
         <p class="status">${t('setup_body')}</p>
-        <pre>npx @dotrino/ia-agent enroll</pre>
+        ${installCmds()}
         <p class="status">1 · ${t('setup_s1')}</p>
         <p class="status">2 · ${t('setup_s2')}</p></div>`
       return
