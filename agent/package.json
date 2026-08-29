@@ -22,7 +22,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@dotrino/remote-agent": "^0.3.0"
+    "@dotrino/remote-agent": "^0.5.3"
   },
   "engines": {
     "node": ">=18"
