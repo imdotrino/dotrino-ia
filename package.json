@@ -18,11 +18,11 @@
     "@dotrino/remote-agent": "0.5.3",
     "@dotrino/reputation": "0.9.0",
     "@dotrino/store": "0.7.0",
-    "@dotrino/topbar": "0.9.0",
+    "@dotrino/topbar": "0.9.1",
     "qrcode-generator": "1.4.4"
   },
   "devDependencies": {
-    "vite": "^7.3.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite": "^7.3.1"
   }
 }
