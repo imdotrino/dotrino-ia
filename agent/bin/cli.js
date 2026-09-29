@@ -5,6 +5,9 @@
  *   dotrino-ia-agent [--name <n>]          enlaza (si falta) y CORRE el agente
  *   dotrino-ia-agent enroll [--name <n>]   re-enlaza (sobrescribe) y corre el agente
  *   dotrino-ia-agent list                  los agentes enlazados en esta máquina
+  dotrino-ia-agent info [--name <n>]     qué aparato es: su ID (el de «dotrino-vault members»),
+                                         su bóveda y sus permisos. Sin red. [--json]
+ *   dotrino-ia-agent info [--name <n>]     qué aparato es: su ID, su bóveda, sus permisos
  *
  * Cada agente tiene su NOMBRE y su enlace (`@dotrino/remote-agent/instances`), como `dotrino-env`.
  *
@@ -19,6 +22,7 @@ import path from 'node:path'
 import { startIaAgent } from '../index.js'
 import { enroll, parseQr, loadLink } from '@dotrino/remote-agent/link'
 import { resolveInstance, listInstances, lockInstance, instancesRoot } from '@dotrino/remote-agent/instances'
+import { deviceInfo, formatDeviceInfo } from '@dotrino/vault/device-info'
 
 // El tipo de este agente: el label con que arranca y la carpeta de sus enlaces.
 const KIND = 'ia-agent'
@@ -38,6 +42,8 @@ if (args.includes('-h') || args.includes('--help')) {
   dotrino-ia-agent [--name <n>]          enlaza este agente (si falta) y lo corre
   dotrino-ia-agent enroll [--name <n>]   re-enlaza (sobrescribe) y corre el agente
   dotrino-ia-agent list                  los agentes enlazados en esta máquina
+  dotrino-ia-agent info [--name <n>]     qué aparato es: su ID (el de «dotrino-vault members»),
+                                         su bóveda y sus permisos. Sin red. [--json]
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
                                          aparte, p. ej. dentro de un contenedor)
   dotrino-ia-agent init-podman [dir]     escribe el andamiaje PODMAN (Containerfile,
@@ -79,6 +85,20 @@ if (cmd === 'list') {
   const names = listInstances(KIND)
   if (!names.length) console.log('No hay ningún agente enlazado en esta máquina.')
   for (const n of names) console.log(`  ${n}   ${instancesRoot(KIND)}/${n}`)
+  process.exit(0)
+}
+
+// `info`: la pieza común del ecosistema (`@dotrino/vault/device-info`). Lo que se viene a
+// mirar es el ID, para buscarlo en el acta.
+if (cmd === 'info') {
+  try {
+    const fixed = opt('--dir') || process.env.DOTRINO_REMOTE_AGENT_DIR
+    const inst = fixed ? { name: null, dir: fixed } : resolveInstance(KIND, opt('--name'))
+    const link = loadLink(inst.dir)
+    if (!link) { console.error(`Este agente no está enlazado (${inst.dir}). Enlázalo con: dotrino-ia-agent`); process.exit(1) }
+    const info = await deviceInfo(link, { kind: KIND, name: inst.name, version: VERSION, dir: inst.dir })
+    console.log(args.includes('--json') ? JSON.stringify(info, null, 2) : formatDeviceInfo(info))
+  } catch (e) { console.error('error:', e.message); process.exit(1) }
   process.exit(0)
 }
 

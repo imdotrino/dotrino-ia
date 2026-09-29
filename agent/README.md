@@ -13,6 +13,7 @@ npx @dotrino/ia-agent                        # enlaza (si falta) y corre
 npx @dotrino/ia-agent enroll                 # re-enlaza y corre
 npx @dotrino/ia-agent --name proyecto-a      # otro agente, con su propio enlace
 npx @dotrino/ia-agent list                   # los enlazados en esta máquina
+npx @dotrino/ia-agent info                   # qué aparato es: su ID, su bóveda, sus permisos
 npx @dotrino/ia-agent init-podman            # andamiaje para correrlo aislado (o init-docker)
 #   [--proxy wss://…] [--dir /ruta] [--enroll-only]
 ```
