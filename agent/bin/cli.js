@@ -2,9 +2,11 @@
 /**
  * dotrino-ia-agent — agente de Dotrino IA.
  *
- *   dotrino-ia-agent            enlaza (si falta) y CORRE el agente
- *   dotrino-ia-agent enroll     re-enlaza (sobrescribe) y corre el agente
- *   opciones: [--proxy <wss://…>] [--dir <ruta>]
+ *   dotrino-ia-agent [--name <n>]          enlaza (si falta) y CORRE el agente
+ *   dotrino-ia-agent enroll [--name <n>]   re-enlaza (sobrescribe) y corre el agente
+ *   dotrino-ia-agent list                  los agentes enlazados en esta máquina
+ *
+ * Cada agente tiene su NOMBRE y su enlace (`@dotrino/remote-agent/instances`), como `dotrino-env`.
  *
  * El agente es un dispositivo enrolado del vault (label 'ia-agent'): puede vivir en
  * cualquier máquina y aparece solo en ia.dotrino.com para chatear con tus IAs
@@ -15,7 +17,11 @@ import { createRequire } from 'node:module'
 import { watchForUpdate } from '@dotrino/update'
 import path from 'node:path'
 import { startIaAgent } from '../index.js'
-import { enroll, parseQr, loadLink, dataDir } from '@dotrino/remote-agent/link'
+import { enroll, parseQr, loadLink } from '@dotrino/remote-agent/link'
+import { resolveInstance, listInstances, lockInstance, instancesRoot } from '@dotrino/remote-agent/instances'
+
+// El tipo de este agente: el label con que arranca y la carpeta de sus enlaces.
+const KIND = 'ia-agent'
 
 const { version: VERSION } = createRequire(import.meta.url)('../package.json')
 const args = process.argv.slice(2)
@@ -29,8 +35,9 @@ function ask (q) {
 
 if (args.includes('-h') || args.includes('--help')) {
   console.log(`uso:
-  dotrino-ia-agent                       enlaza esta máquina (si falta) y corre el agente
-  dotrino-ia-agent enroll                re-enlaza (sobrescribe) y corre el agente
+  dotrino-ia-agent [--name <n>]          enlaza este agente (si falta) y lo corre
+  dotrino-ia-agent enroll [--name <n>]   re-enlaza (sobrescribe) y corre el agente
+  dotrino-ia-agent list                  los agentes enlazados en esta máquina
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
                                          aparte, p. ej. dentro de un contenedor)
   dotrino-ia-agent init-podman [dir]     escribe el andamiaje PODMAN (Containerfile,
@@ -38,12 +45,17 @@ if (args.includes('-h') || args.includes('--help')) {
                                          agente AISLADO, sin clonar el repo (rootless,
                                          sin daemon). [dir] por defecto: el actual
   dotrino-ia-agent init-docker [dir]     ídem, para DOCKER (Dockerfile, docker-compose.yml)
-  opciones: [--proxy <wss://…>] [--dir <ruta>] [--force]
+  opciones: [--name <n>] [--proxy <wss://…>] [--dir <ruta>] [--force]
+
+Varios agentes a la vez (uno por proyecto): dale a cada uno su --name. Cada uno se
+enlaza una vez y aparece aparte en ia.dotrino.com. Claude trabaja en la carpeta desde
+la que lanzas el agente (o en IA_CWD).
 
 Sin terminal interactiva (contenedor -d, systemd, pm2): enrolar no se puede. Si ya hay
 enlace, corre; si no, avisa y sale. Enrola antes en una terminal y monta el link.json.
 
-datos en ${dataDir()} (override DOTRINO_REMOTE_AGENT_DIR)`)
+enlaces en ${instancesRoot(KIND)}/<nombre> (override DOTRINO_AGENT_HOME; --dir o
+DOTRINO_REMOTE_AGENT_DIR fuerzan una carpeta concreta, p. ej. en un contenedor)`)
   process.exit(0)
 }
 
@@ -61,6 +73,13 @@ Siguientes pasos${targetDir === '.' ? '' : ` (desde ${targetDir}/)`}:
   3) Apunta el volumen ./workspace a tu proyecto en ${engine === 'Podman' ? 'compose.yaml' : 'docker-compose.yml'}
   4) Corre:  ${runCmd}
 `)
+}
+
+if (cmd === 'list') {
+  const names = listInstances(KIND)
+  if (!names.length) console.log('No hay ningún agente enlazado en esta máquina.')
+  for (const n of names) console.log(`  ${n}   ${instancesRoot(KIND)}/${n}`)
+  process.exit(0)
 }
 
 if (cmd === 'init-podman' || cmd === 'init-docker') {
@@ -113,7 +132,14 @@ async function doEnroll (dir) {
 }
 
 try {
-  const dir = opt('--dir')
+  // --dir (o DOTRINO_REMOTE_AGENT_DIR, el de los contenedores) manda una carpeta concreta;
+  // si no, la de la instancia con su nombre.
+  const fixed = opt('--dir') || process.env.DOTRINO_REMOTE_AGENT_DIR
+  const inst = fixed ? { name: null, dir: fixed } : resolveInstance(KIND, opt('--name'))
+  const dir = inst.dir
+  // Antes de nada, también de enlazar: re-enlazar debajo de un agente que corre le cambia
+  // la llave a mitad de camino.
+  process.on('exit', lockInstance(dir))
   const enrollOnly = args.includes('--enroll-only')
   // El comando por defecto enrola SOLO si aún no está enlazada; `enroll` fuerza
   // re-enrolar (sobrescribe) aunque ya lo esté.
@@ -126,7 +152,7 @@ try {
       console.error('No estás enrolado y no hay terminal interactiva para hacerlo.')
       console.error('Enrola antes en una terminal y monta el link.json resultante:')
       console.error('  npx @dotrino/ia-agent enroll --enroll-only --dir <carpeta>')
-      console.error(`El enlace vive en ${dataDir()} (o DOTRINO_REMOTE_AGENT_DIR); monta esa carpeta en el contenedor.`)
+      console.error(`El enlace vive en ${dir} (o DOTRINO_REMOTE_AGENT_DIR); monta esa carpeta en el contenedor.`)
       process.exit(1)
     }
     if (cmd === 'enroll' && loadLink(dir)) console.log('Re-enlazando esta máquina (sobrescribe el enlace actual).\n')
@@ -145,7 +171,9 @@ try {
   })
   console.log('\n  Dotrino IA — agente activo')
   console.log('  versión:', VERSION)
+  if (inst.name) console.log('  nombre:', inst.name)
   console.log('  máquina:', agent.machineId)
+  console.log('  trabaja en:', process.env.IA_CWD || process.cwd())
   console.log('  aparece solo en ia.dotrino.com\n')
   // §15: una vez al día mira si hay versión nueva y lo dice. Solo avisa: instalar lo decide una persona.
   watchForUpdate({
