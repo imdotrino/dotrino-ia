@@ -42,18 +42,22 @@ export async function startIaAgent (opts = {}) {
         // una ráfaga de deltas saturaría. Flush al final siempre.
         let buf = ''
         let timer = null
+        let streamed = false
         const flush = () => { timer = null; if (buf) { const t = buf; buf = ''; session.send({ type: 'tok', text: t }).catch(() => {}) } }
 
         try {
           const r = await driver.send(msg.text, {
             onToken: (tok) => {
+              streamed = true
               buf += tok
               if (!timer) timer = setTimeout(flush, 60)
             }
           })
           if (timer) { clearTimeout(timer); timer = null }
           if (buf) { const t = buf; buf = ''; await session.send({ type: 'tok', text: t }) }
-          await session.send({ type: 'done', sessionId: r.sessionId, tokens: r.tokens })
+          // Si no llegó ningún token (el driver cayó a la respuesta completa), el texto va en
+          // el `done`: si no, la respuesta se perdía y el chat se quedaba sin contestar.
+          await session.send({ type: 'done', sessionId: r.sessionId, tokens: r.tokens, ...(streamed ? {} : { text: r.text }) })
         } catch (e) {
           if (timer) clearTimeout(timer)
           await session.send({ type: 'error', message: e.message }).catch(() => {})

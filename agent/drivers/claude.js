@@ -49,7 +49,9 @@ export class ClaudeDriver {
   }
 
   async _send (text, sid, onToken) {
-    const args = ['-p', text, '--output-format', 'stream-json', '--verbose', ...this.flags]
+    // `--include-partial-messages`: sin él, `claude` ya no emite los `content_block_delta`
+    // y no llega ningún token hasta el final (se veía como que no contestaba).
+    const args = ['-p', text, '--output-format', 'stream-json', '--verbose', '--include-partial-messages', ...this.flags]
     if (sid) args.push('--resume', sid)
 
     let streamed = ''
