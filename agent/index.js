@@ -27,6 +27,8 @@ export async function startIaAgent (opts = {}) {
     label: 'ia-agent',
     proxyUrl: opts.proxyUrl,
     dir: opts.dir,
+    link: opts.link,        // solo pruebas: enlace y transporte de mentira
+    client: opts.client,
     quiet: opts.quiet,
     onReady: opts.onReady,
     onRevoked: opts.onRevoked,

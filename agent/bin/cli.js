@@ -4,17 +4,20 @@
  *
  *   dotrino-ia-agent            enlaza (si falta) y CORRE el agente
  *   dotrino-ia-agent enroll     re-enlaza (sobrescribe) y corre el agente
- *   opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>]
+ *   opciones: [--proxy <wss://…>] [--dir <ruta>]
  *
  * El agente es un dispositivo enrolado del vault (label 'ia-agent'): puede vivir en
  * cualquier máquina y aparece solo en ia.dotrino.com para chatear con tus IAs
  * (Claude, OpenCode…). Con un solo comando queda enlazado y sirviendo.
  */
 import readline from 'node:readline'
+import { createRequire } from 'node:module'
+import { watchForUpdate } from '@dotrino/update'
 import path from 'node:path'
 import { startIaAgent } from '../index.js'
 import { enroll, parseQr, loadLink, dataDir } from '@dotrino/remote-agent/link'
 
+const { version: VERSION } = createRequire(import.meta.url)('../package.json')
 const args = process.argv.slice(2)
 const cmd = args[0] && !args[0].startsWith('-') ? args[0] : 'run'
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined }
@@ -35,12 +38,12 @@ if (args.includes('-h') || args.includes('--help')) {
                                          agente AISLADO, sin clonar el repo (rootless,
                                          sin daemon). [dir] por defecto: el actual
   dotrino-ia-agent init-docker [dir]     ídem, para DOCKER (Dockerfile, docker-compose.yml)
-  opciones: [--label <nombre>] [--proxy <wss://…>] [--dir <ruta>] [--force]
+  opciones: [--proxy <wss://…>] [--dir <ruta>] [--force]
 
 Sin terminal interactiva (contenedor -d, systemd, pm2): enrolar no se puede. Si ya hay
 enlace, corre; si no, avisa y sale. Enrola antes en una terminal y monta el link.json.
 
-datos en ${dataDir('dotrino-ia-agent')} (override DOTRINO_REMOTE_AGENT_DIR)`)
+datos en ${dataDir()} (override DOTRINO_REMOTE_AGENT_DIR)`)
   process.exit(0)
 }
 
@@ -82,19 +85,21 @@ if (cmd === 'init-podman' || cmd === 'init-docker') {
   process.exit(0)
 }
 
-async function doEnroll (dir, label) {
+async function doEnroll (dir) {
   console.log('Enlazar esta máquina con tu vault.')
   console.log('El código lo generas en tu bóveda. Hay dos formas:')
   console.log('  · Sin vault externo → abre https://profile.dotrino.com/myvault,')
   console.log('    activa la bóveda y pulsa "Generar código de emparejamiento"; copia el código.')
   console.log('  · Con vault en un PC → ahí corre `dotrino-vault pair` y copia el QR/JSON.\n')
   const text = await ask('Pega el código y Enter:\n> ')
-  const qr = parseQr(text)
+  const qr = await parseQr(text)
   console.log('\nConectando…')
   await enroll({
     qr,
     dir,
-    label,
+    // El label del ENLACE: la app encuentra la máquina porque el agente contesta
+    // `kind: 'ia-agent'` al ping, no por el nombre que le pone el dueño en el acta.
+    label: 'ia-agent',
     onChallenge: ({ deviceId, code }) => {
       console.log('\n  Escribe ESTE código en tu bóveda para aprobar esta máquina:')
       console.log(`    código: ${code}`)
@@ -109,7 +114,6 @@ async function doEnroll (dir, label) {
 
 try {
   const dir = opt('--dir')
-  const label = opt('--label') || 'ia-agent'
   const enrollOnly = args.includes('--enroll-only')
   // El comando por defecto enrola SOLO si aún no está enlazada; `enroll` fuerza
   // re-enrolar (sobrescribe) aunque ya lo esté.
@@ -122,11 +126,11 @@ try {
       console.error('No estás enrolado y no hay terminal interactiva para hacerlo.')
       console.error('Enrola antes en una terminal y monta el link.json resultante:')
       console.error('  npx @dotrino/ia-agent enroll --enroll-only --dir <carpeta>')
-      console.error(`El enlace vive en ${dataDir('dotrino-ia-agent')} (o DOTRINO_REMOTE_AGENT_DIR); monta esa carpeta en el contenedor.`)
+      console.error(`El enlace vive en ${dataDir()} (o DOTRINO_REMOTE_AGENT_DIR); monta esa carpeta en el contenedor.`)
       process.exit(1)
     }
     if (cmd === 'enroll' && loadLink(dir)) console.log('Re-enlazando esta máquina (sobrescribe el enlace actual).\n')
-    await doEnroll(dir, label)
+    await doEnroll(dir)
     // `--enroll-only`: enrola y SALE (para producir el link afuera y correrlo aparte).
     if (enrollOnly) {
       console.log('  Listo: el enlace quedó guardado. Ya puedes correr el agente con ese link.json (p. ej. dentro de un contenedor).\n')
@@ -140,8 +144,14 @@ try {
     onRevoked: () => { console.log('  Esta máquina fue revocada desde tu bóveda. Para reconectarla, vuelve a enrolarla.\n'); process.exit(0) }
   })
   console.log('\n  Dotrino IA — agente activo')
+  console.log('  versión:', VERSION)
   console.log('  máquina:', agent.machineId)
   console.log('  aparece solo en ia.dotrino.com\n')
+  // §15: una vez al día mira si hay versión nueva y lo dice. Solo avisa: instalar lo decide una persona.
+  watchForUpdate({
+    current: VERSION, source: 'npm', pkg: '@dotrino/ia-agent',
+    onNewer: (r) => console.log(`[ia-agent] version ${r.version} is available (running ${r.current}): npx @dotrino/ia-agent@latest`)
+  })
   // Mantener vivo el servicio aunque stdin no sea una TTY (systemd/pm2/`nohup </dev/null`):
   // los sockets del proxy están `unref`'d, así que sin este keep-alive el proceso saldría
   // justo después de arrancar. Vive hasta SIGINT/SIGTERM (o auto-borrado por revocación).

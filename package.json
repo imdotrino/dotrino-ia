@@ -1,7 +1,7 @@
 {
   "name": "dotrino-ia",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Chat privado con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el navegador; solo tu dispositivo enlazado al vault puede entrar, cifrado punto a punto.",
   "scripts": {
@@ -11,14 +11,14 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@dotrino/identity": "0.91.0",
+    "@dotrino/identity": "0.105.0",
     "@dotrino/install": "0.3.1",
     "@dotrino/nav": "0.3.0",
-    "@dotrino/proxy-client": "0.13.1",
-    "@dotrino/remote-agent": "0.5.3",
-    "@dotrino/reputation": "0.9.0",
+    "@dotrino/proxy-client": "0.25.0",
+    "@dotrino/remote-agent": "0.11.0",
+    "@dotrino/reputation": "0.12.0",
     "@dotrino/store": "0.11.0",
-    "@dotrino/topbar": "0.9.1",
+    "@dotrino/topbar": "0.12.0",
     "qrcode-generator": "1.4.4"
   },
   "devDependencies": {

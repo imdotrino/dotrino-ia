@@ -3,7 +3,7 @@
  *
  * Estados (espejo de dotrino-terminal, cambiando consola → chat):
  *   1. choiceScreen  — elegir modo (vault externo / self). Por ahora solo vault externo.
- *   2. iaScreen      — descubre los agentes IA vinculados al vault (label 'ia-agent')
+ *   2. iaScreen      — descubre los agentes IA de la cuenta (contestan `kind: 'ia-agent'`)
  *                      y abre un chat con cada uno.
  *   3. chatScreen    — chat con un agente (IaAgentClient sobre @dotrino/remote-agent).
  *
@@ -13,7 +13,11 @@
 import './style.css'
 import { identity, getLink, getSelfLink } from './vault.js'
 import { IaAgentClient } from './agentClient.js'
-import { listAgentsByLabel } from '@dotrino/remote-agent/discover'
+import { listAgentsByLabel, probeAgents } from '@dotrino/remote-agent/discover'
+
+// Lo que contesta el agente de IA cuando se le pregunta qué es (agent/index.js).
+// NO es el nombre del acta: ese lo pone el dueño al emparejar.
+const AGENT_KIND = 'ia-agent'
 
 import { pubkeyId, avatarDataUri } from '@dotrino/identity/capabilities'
 import { createVaultReputation } from '@dotrino/reputation'
@@ -36,7 +40,7 @@ const I18N = {
     link_expired: 'Tu enlace al vault venció. Vuelve a enlazarlo.',
     pair_here: 'Emparejar en profile.dotrino.com',
     agents_loading: 'Buscando tus agentes…',
-    agents_none: 'Aún no tienes agentes de IA vinculados.',
+    agents_none: 'No hay ninguna máquina con el agente de IA encendido. Si ya lo instalaste, comprueba que esté corriendo y recarga.',
     agents_title: 'Tus agentes', agents_sub: 'Máquinas con el agente IA enrolado a tu vault.',
     setup_title: 'Instala el agente en tu PC',
     setup_body: 'En la máquina donde corren tus proyectos, ejecuta:',
@@ -62,7 +66,7 @@ const I18N = {
     link_expired: 'Your vault link expired. Re-pair it.',
     pair_here: 'Pair at profile.dotrino.com',
     agents_loading: 'Looking for your agents…',
-    agents_none: 'You have no IA agents linked yet.',
+    agents_none: 'No machine has the AI agent running. If you already installed it, check that it is running and reload.',
     agents_title: 'Your agents', agents_sub: 'Machines with the IA agent enrolled to your vault.',
     setup_title: 'Install the agent on your PC',
     setup_body: 'On the machine where your projects run, run:',
@@ -108,7 +112,7 @@ async function wireTopbar () {
   const tb = document.getElementById('topbar')
   try {
     const id = await identity()
-    const reputation = createVaultReputation({ identity: id })
+    const reputation = createVaultReputation(id)
     tb.identity = id
     tb.reputation = reputation
     tb.setAttribute('lang', lang)
@@ -150,7 +154,17 @@ async function iaScreen (link) {
   app.replaceChildren(node)
   const box = node.querySelector('#agents')
   try {
-    const list = await listAgentsByLabel(link.id, 'ia-agent')
+    // Se pregunta a los miembros del acta qué son, y salen los que contestan como agente
+    // de IA. Uno apagado no contesta y no sale: sin preguntarle no se sabe qué es.
+    const members = await listAgentsByLabel(link.id)
+    const { WebSocketProxyClient } = await import('@dotrino/proxy-client')
+    const probe = new WebSocketProxyClient({ url: link.proxy || 'wss://proxy.dotrino.com', enableWebRTC: false, autoReconnect: false })
+    await probe.connect()
+    let found
+    try { found = await probeAgents(probe, members.map((m) => m.sub)) } finally { try { probe.close() } catch (_) {} }
+    const list = await Promise.all(members.filter((m) => found.get(m.sub)?.kind === AGENT_KIND).map(async (m) => ({
+      ...m, deviceId: (await pubkeyId(m.sub)).slice(0, 8).toUpperCase().replace(/(.{4})(.{4})/, '$1-$2')
+    })))
     if (!list.length) {
       box.innerHTML = `<p class="status">${t('agents_none')}</p>
         <div class="setup"><b>${t('setup_title')}</b>
@@ -163,7 +177,7 @@ async function iaScreen (link) {
     box.innerHTML = `<b>${t('agents_title')}</b><div class="machine-list"></div>`
     const holder = box.querySelector('.machine-list')
     for (const d of list) {
-      const name = `${d.label} · ${d.deviceId}`
+      const name = d.label ? `${d.label} · ${d.deviceId}` : d.deviceId
       const row = el(`<div class="machine-row" data-sub="${esc(d.sub)}">
         <button class="machine" data-testid="agent-item" title="${esc(d.deviceId)}">
           <span class="mdot"></span>🤖 ${esc(name)}
@@ -178,7 +192,7 @@ async function iaScreen (link) {
 
 // --- Pantalla: chat con un agente ---
 async function chatScreen (link, agent) {
-  const name = `${agent.label} · ${agent.deviceId}`
+  const name = agent.label ? `${agent.label} · ${agent.deviceId}` : agent.deviceId
   const node = el(`<section class="card chat">
     <div class="chat-head">
       <button class="back" id="back" data-testid="chat-back">${t('back')}</button>
@@ -271,7 +285,7 @@ async function render () {
     try {
       const selfLink = await getSelfLink()
       if (selfLink.id?.me?.publickey) {
-        const agents = await listAgentsByLabel(selfLink.id, 'ia-agent')
+        const agents = await listAgentsByLabel(selfLink.id)
         if (agents.length) return iaScreen(selfLink)
       }
     } catch (_) {}

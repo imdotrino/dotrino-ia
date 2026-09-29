@@ -16,7 +16,7 @@ Documentación de uso:
 - El enlace entre teléfono y máquina lo hace `@dotrino/remote-agent`
   (emparejamiento con la bóveda, certificado de dispositivo, revocación).
 - El transporte es `@dotrino/proxy-client`; la identidad, `@dotrino/identity`.
-- El descubrimiento de máquinas usa `@dotrino/remote-agent/discover`.
+- El descubrimiento de máquinas usa `@dotrino/remote-agent/discover`: se pregunta a los miembros del acta qué son (`probeAgents`) y salen los que contestan `ia-agent`. El nombre del acta lo pone el dueño y no sirve para esto.
 
 ## Stack
 
