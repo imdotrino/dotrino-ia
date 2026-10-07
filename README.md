@@ -1,5 +1,11 @@
 # Dotrino IA — ia.dotrino.com
 
+> ⚠️ **RETIRADA el 2026-10-07.** La reemplaza [`dotrino-terminal`](https://github.com/imdotrino/dotrino-terminal)
+> (`terminal.dotrino.com`): consolas, agentes de IA y versión nativa, todo en una.
+> `ia.dotrino.com` solo muestra el aviso; el paquete `@dotrino/ia-agent` está marcado
+> `deprecated` en npm y no recibe más versiones. Lo de abajo queda como historial.
+
+
 Habla desde tu teléfono con los asistentes de IA (Claude, OpenCode…) que corren
 en **tu propia computadora**. La conversación va cifrada de punta a punta y solo
 entra un dispositivo que hayas enlazado a tu bóveda. Sin cuentas y sin rastreo.

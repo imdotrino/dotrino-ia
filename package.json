@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "description": "Chat privado con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el navegador; solo tu dispositivo enlazado al vault puede entrar, cifrado punto a punto.",
+  "description": "RETIRADA (2026-10-07): la reemplaza dotrino-terminal. Era: chat privado con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el navegador; solo tu dispositivo enlazado al vault puede entrar, cifrado punto a punto.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>IA — Dotrino</title>
-  <meta name="description" content="Chatea con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el móvil. Solo tu dispositivo enlazado al vault puede entrar; el resto queda fuera. Sin cuentas, sin rastreo." />
+  <title>IA (retirada) — Dotrino</title>
+  <meta name="description" content="Dotrino IA está retirada: Terminal (terminal.dotrino.com) ya hace lo mismo y más." />
   <link rel="canonical" href="https://ia.dotrino.com/" />
+  <meta name="robots" content="noindex" />
 
   <meta name="theme-color" content="#0e0b1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -39,16 +40,31 @@
   <script data-goatcounter="https://goat.dotrino.com/count" async src="https://goat.dotrino.com/count.js"></script>
 </head>
 <body>
-  <!-- Barra superior estándar del ecosistema en UN componente (@dotrino/topbar):
-       marca + volver + slot de acciones + idioma + perfil + moneda de support. -->
+  <!-- App RETIRADA (2026-10-07): la reemplaza Terminal. Queda solo este aviso; el
+       código de la PWA sigue en src/ por historial, pero no se carga. -->
   <dotrino-topbar id="topbar" brand="IA" icon="./icon.svg"
     support-repo="imdotrino/dotrino-ia" support-discord="https://discord.gg/D648uq7cth"
-    profile>
-    <button id="installBtn" slot="end" class="tb-action" hidden>Instalar</button>
-  </dotrino-topbar>
+    profile></dotrino-topbar>
 
-  <main id="app"></main>
+  <main id="app" class="retired">
+    <section data-lang="es">
+      <h1>Dotrino IA se retiró</h1>
+      <p>Esta app ya no se mantiene. <strong>Terminal</strong> hace lo mismo y más:
+        consolas, agentes de IA en tu computadora y versión nativa para el teléfono.</p>
+      <p><a class="cta" href="https://terminal.dotrino.com/">Ir a Terminal</a></p>
+      <p class="dim">Si tenías un agente de IA instalado (<code>@dotrino/ia-agent</code>),
+        puedes retirarlo de tu bóveda desde la lista de aparatos.</p>
+    </section>
+    <section data-lang="en" hidden>
+      <h1>Dotrino IA has been retired</h1>
+      <p>This app is no longer maintained. <strong>Terminal</strong> does the same and more:
+        consoles, AI agents on your computer and a native version for your phone.</p>
+      <p><a class="cta" href="https://terminal.dotrino.com/">Go to Terminal</a></p>
+      <p class="dim">If you had an AI agent installed (<code>@dotrino/ia-agent</code>),
+        you can remove it from your vault in the devices list.</p>
+    </section>
+  </main>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/retired.js"></script>
 </body>
 </html>

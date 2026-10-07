@@ -1,7 +1,7 @@
 {
   "name": "Dotrino IA",
   "short_name": "IA",
-  "description": "Chat privado con tus agentes de IA (Claude, OpenCode) que corren en tu PC, desde el móvil.",
+  "description": "App retirada: usa Terminal (terminal.dotrino.com).",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
