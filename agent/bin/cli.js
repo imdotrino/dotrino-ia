@@ -5,9 +5,9 @@
  *   dotrino-ia-agent [--name <n>]          enlaza (si falta) y CORRE el agente
  *   dotrino-ia-agent enroll [--name <n>]   re-enlaza (sobrescribe) y corre el agente
  *   dotrino-ia-agent list                  los agentes enlazados en esta máquina
-  dotrino-ia-agent info [--name <n>]     qué aparato es: su ID (el de «dotrino-vault members»),
-                                         su bóveda y sus permisos. Sin red. [--json]
  *   dotrino-ia-agent info [--name <n>]     qué aparato es: su ID, su bóveda, sus permisos
+ *   dotrino-ia-agent update [--name <n>] [--approval on|off] [--notify on|off]
+ *                                          cómo se actualiza este agente (CONVENCIONES §15)
  *
  * Cada agente tiene su NOMBRE y su enlace (`@dotrino/remote-agent/instances`), como `dotrino-env`.
  *
@@ -17,7 +17,7 @@
  */
 import readline from 'node:readline'
 import { createRequire } from 'node:module'
-import { watchForUpdate } from '@dotrino/update'
+import { updatePrefsCommand, updateStatusText } from '@dotrino/update/npm'
 import path from 'node:path'
 import { startIaAgent } from '../index.js'
 import { enroll, parseQr, loadLink } from '@dotrino/remote-agent/link'
@@ -44,6 +44,10 @@ if (args.includes('-h') || args.includes('--help')) {
   dotrino-ia-agent list                  los agentes enlazados en esta máquina
   dotrino-ia-agent info [--name <n>]     qué aparato es: su ID (el de «dotrino-vault members»),
                                          su bóveda y sus permisos. Sin red. [--json]
+  dotrino-ia-agent update [--name <n>]   cómo se actualiza este agente. Por defecto lo hace
+                                         solo y avisa de que lo hizo:
+                                           --approval on|off  pedir antes aprobación a tu bóveda
+                                           --notify on|off    avisar cuando se actualiza
   dotrino-ia-agent enroll --enroll-only  enrola y SALE (produce el link.json para correrlo
                                          aparte, p. ej. dentro de un contenedor)
   dotrino-ia-agent init-podman [dir]     escribe el andamiaje PODMAN (Containerfile,
@@ -88,6 +92,20 @@ if (cmd === 'list') {
   process.exit(0)
 }
 
+// `update`: los dos ajustes de ESTE agente (`@dotrino/update/npm`). Sin banderas, los enseña.
+if (cmd === 'update') {
+  let r
+  try {
+    const dir = opt('--dir') || process.env.DOTRINO_REMOTE_AGENT_DIR || resolveInstance(KIND, opt('--name')).dir
+    // Solo las banderas de este comando: `--name`/`--dir` ya eligieron la carpeta.
+    const own = args.slice(1).filter((a, i, all) => !['--name', '--dir'].includes(a) && !['--name', '--dir'].includes(all[i - 1]))
+    r = updatePrefsCommand(own, { dir, lang: 'es' })
+  } catch (e) { console.error('error:', e.message); process.exit(1) }
+  if (!r.handled) { console.error('uso: dotrino-ia-agent update [--name <n>] [--approval on|off] [--notify on|off]'); process.exit(2) }
+  ;(r.ok ? console.log : console.error)(r.text)
+  process.exit(r.ok ? 0 : 2)
+}
+
 // `info`: la pieza común del ecosistema (`@dotrino/vault/device-info`). Lo que se viene a
 // mirar es el ID, para buscarlo en el acta.
 if (cmd === 'info') {
@@ -97,7 +115,11 @@ if (cmd === 'info') {
     const link = loadLink(inst.dir)
     if (!link) { console.error(`Este agente no está enlazado (${inst.dir}). Enlázalo con: dotrino-ia-agent`); process.exit(1) }
     const info = await deviceInfo(link, { kind: KIND, name: inst.name, version: VERSION, dir: inst.dir })
-    console.log(args.includes('--json') ? JSON.stringify(info, null, 2) : formatDeviceInfo(info))
+    // Lo pendiente de su actualización (se pidió y no se aprobó, o necesita permisos de
+    // administrador), si hay algo que decir. Sin red: sale de lo apuntado en su carpeta.
+    const pending = updateStatusText({ dir: inst.dir, current: VERSION, lang: 'es' })
+    if (args.includes('--json')) console.log(JSON.stringify(pending ? { ...info, update: pending } : info, null, 2))
+    else console.log(formatDeviceInfo(info) + (pending ? '\n' + pending : ''))
   } catch (e) { console.error('error:', e.message); process.exit(1) }
   process.exit(0)
 }
@@ -195,16 +217,15 @@ try {
   console.log('  máquina:', agent.machineId)
   console.log('  trabaja en:', process.env.IA_CWD || process.cwd())
   console.log('  aparece solo en ia.dotrino.com\n')
-  // §15: una vez al día mira si hay versión nueva y lo dice. Solo avisa: instalar lo decide una persona.
-  watchForUpdate({
-    current: VERSION, source: 'npm', pkg: '@dotrino/ia-agent',
-    onNewer: (r) => console.log(`[ia-agent] version ${r.version} is available (running ${r.current}): npx @dotrino/ia-agent@latest`)
-  })
+  // §15: se actualiza solo. Mira al arrancar y una vez al día; pedir aprobación y avisar son
+  // ajustes de este agente (`dotrino-ia-agent update`).
+  const { startSelfUpdate } = await import('../update.js')
+  const stopUpdates = startSelfUpdate({ dir, version: VERSION, agent })
   // Mantener vivo el servicio aunque stdin no sea una TTY (systemd/pm2/`nohup </dev/null`):
   // los sockets del proxy están `unref`'d, así que sin este keep-alive el proceso saldría
   // justo después de arrancar. Vive hasta SIGINT/SIGTERM (o auto-borrado por revocación).
   const keepAlive = setInterval(() => {}, 1 << 30)
-  const bye = () => { clearInterval(keepAlive); agent.close(); process.exit(0) }
+  const bye = () => { clearInterval(keepAlive); stopUpdates(); agent.close(); process.exit(0) }
   process.on('SIGINT', bye); process.on('SIGTERM', bye)
 } catch (e) {
   console.error('error:', e.message)

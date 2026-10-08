@@ -14,9 +14,24 @@ npx @dotrino/ia-agent enroll                 # re-enlaza y corre
 npx @dotrino/ia-agent --name proyecto-a      # otro agente, con su propio enlace
 npx @dotrino/ia-agent list                   # los enlazados en esta máquina
 npx @dotrino/ia-agent info                   # qué aparato es: su ID, su bóveda, sus permisos
+npx @dotrino/ia-agent update                 # cómo se actualiza: [--approval on|off] [--notify on|off]
 npx @dotrino/ia-agent init-podman            # andamiaje para correrlo aislado (o init-docker)
 #   [--proxy wss://…] [--dir /ruta] [--enroll-only]
 ```
+
+### Se actualiza solo
+
+Instalado con `npm install -g` en un prefijo del usuario (nvm o similar), el agente mira una
+vez al día si hay versión nueva, comprueba que el paquete de npm cuadra con lo que midió su
+release de GitHub (`npm-integrity.json`) y la instala (`@dotrino/update/npm`, CONVENCIONES §15).
+Solo se reinicia si hay quien lo levante (systemd, pm2). Corrido con `npx`, desde un checkout,
+dentro de un contenedor con la imagen fija o en un prefijo de root no se toca: lo dice y, si
+hace falta root, avisa a quien aprueba en tu cuenta.
+
+Dos ajustes, de cada agente: `update --approval on|off` (pedir antes aprobación a tu bóveda;
+apagado) y `update --notify on|off` (avisar de que se actualizó; encendido). `info` dice si
+hay una versión que se pidió y no se aprobó, o que necesita permisos de administrador.
+
 
 | Variable | Qué hace | Por defecto |
 |---|---|---|
