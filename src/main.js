@@ -10,6 +10,7 @@
  * El middleware (handshake E2E, emparejamiento, revocación) lo da
  * @dotrino/remote-agent; esta app solo define el dominio (chat) y el renderer.
  */
+import '@dotrino/theme/theme.css'
 import './style.css'
 import { identity, getLink, getSelfLink } from './vault.js'
 import { IaAgentClient } from './agentClient.js'

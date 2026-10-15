@@ -1,18 +1,18 @@
-/* Dotrino IA — tema oscuro, layout chat.Variables heredan el mismo lenguaje visual del ecosistema. */
+/* Dotrino IA — layout chat. Colores y fuentes del ecosistema (@dotrino/theme, CONVENCIONES §5). */
 :root {
-  --bg: #0e0b1a;
-  --bg-2: #15122a;
-  --panel: #1a1733;
-  --panel-2: #221d44;
-  --border: #2c2658;
-  --text: #e8e6f5;
-  --muted: #9b95c4;
-  --accent: #7c5cff;
-  --accent-2: #4cc2ff;
-  --ok: #3ddc97;
-  --warn: #ffb454;
-  --err: #ff5c7a;
-  --radius: 14px;
+  --bg: var(--dt-bg);
+  --bg-2: var(--dt-bg-2);
+  --panel: var(--dt-surface);
+  --panel-2: var(--dt-surface-2);
+  --border: var(--dt-line-soft);
+  --text: var(--dt-text);
+  --muted: var(--dt-text-dim);
+  --accent: var(--dt-accent);
+  --accent-2: var(--dt-violet);
+  --ok: var(--dt-ok);
+  --warn: var(--dt-busy);
+  --err: var(--dt-error);
+  --radius: var(--dt-radius);
   --maxw: 880px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -23,7 +23,7 @@ html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--dt-font);
   font-size: 16px;
   line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
@@ -47,7 +47,7 @@ b { color: var(--text); }
 
 /* --- Botones --- */
 .primary {
-  background: var(--accent); color: #fff; border: none;
+  background: var(--accent); color: var(--dt-accent-ink); border: none;
   border-radius: 10px; padding: 11px 18px; font-weight: 600;
 }
 .primary:active { transform: translateY(1px); }
@@ -95,7 +95,7 @@ b { color: var(--text); }
   display: flex; flex-direction: column; gap: 10px;
 }
 .msg { max-width: 86%; padding: 9px 13px; border-radius: 12px; white-space: pre-wrap; word-break: break-word; }
-.msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--dt-accent-ink); border-bottom-right-radius: 4px; }
 .msg.agent { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .msg.agent.streaming::after { content: '▋'; opacity: .5; animation: blink 1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: 0; } }

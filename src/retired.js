@@ -3,6 +3,7 @@
  * (2026-10-07): la barra del ecosistema y el aviso bilingüe. La PWA vieja sigue en
  * main.js por historial, pero no se importa.
  */
+import '@dotrino/theme/theme.css'
 import '@dotrino/topbar'
 
 const show = (lang) => {
@@ -23,13 +24,12 @@ if ('serviceWorker' in navigator) {
 
 const style = document.createElement('style')
 style.textContent = `
-  :root { color-scheme: dark; }
-  body { margin: 0; background: #0e0b1a; color: #ece9f5; font-family: system-ui, sans-serif; }
+  body { margin: 0; background: var(--dt-bg); color: var(--dt-text); font-family: var(--dt-font); }
   main.retired { max-width: 40rem; margin: 0 auto; padding: 3rem 1rem; line-height: 1.6; }
   main.retired h1 { font-size: 1.7rem; margin-bottom: 1rem; }
   main.retired .cta { display: inline-block; padding: 0.7rem 1.3rem; border-radius: 10px;
-    background: #7c5cff; color: #fff; text-decoration: none; font-weight: 600; }
-  main.retired .dim { color: #a9a3c2; font-size: 0.92rem; }
+    background: var(--dt-accent); color: var(--dt-accent-ink); text-decoration: none; font-weight: 600; }
+  main.retired .dim { color: var(--dt-text-dim); font-size: 0.92rem; }
   main.retired code { font-size: 0.9em; }
 `
 document.head.append(style)
