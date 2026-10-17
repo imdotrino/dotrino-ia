@@ -20,7 +20,7 @@ import { listAgentsByLabel, probeAgents } from '@dotrino/remote-agent/discover'
 // NO es el nombre del acta: ese lo pone el dueño al emparejar.
 const AGENT_KIND = 'ia-agent'
 
-import { pubkeyId, avatarDataUri } from '@dotrino/identity/capabilities'
+import { keyLabel, avatarDataUri } from '@dotrino/identity/capabilities'
 import { createVaultReputation } from '@dotrino/reputation'
 
 import '@dotrino/topbar'
@@ -164,7 +164,7 @@ async function iaScreen (link) {
     let found
     try { found = await probeAgents(probe, members.map((m) => m.sub)) } finally { try { probe.close() } catch (_) {} }
     const list = await Promise.all(members.filter((m) => found.get(m.sub)?.kind === AGENT_KIND).map(async (m) => ({
-      ...m, deviceId: (await pubkeyId(m.sub)).slice(0, 8).toUpperCase().replace(/(.{4})(.{4})/, '$1-$2')
+      ...m, deviceId: await keyLabel(m.sub)
     })))
     if (!list.length) {
       box.innerHTML = `<p class="status">${t('agents_none')}</p>
