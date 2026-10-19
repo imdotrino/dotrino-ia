@@ -26,7 +26,7 @@ export class IaAgentClient {
       if (p.type === 'tok') this.onToken(p.text, p.final, p.seq)
       else if (p.type === 'tool') this.onTool(p)
       else if (p.type === 'done') this.onDone(p)
-      else if (p.type === 'error') this.onError(new Error(p.message || p.error || 'error del agente'))
+      else if (p.type === 'error') this.onError(new Error(p.message || p.error || 'agent error'))
     })
     this.rc.on('error', (e) => this.onError(e))
     return this

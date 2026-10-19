@@ -1,22 +1,9 @@
 /**
  * init-podman.js — genera el andamiaje Podman (opcional) para correr el agente
  * AISLADO, sin clonar el repo. Lo usa el comando `dotrino-ia-agent init-podman`.
- *
- * Copia las plantillas de `templates/` al directorio destino con sus nombres reales
- * (con punto), inyecta la versión de ESTE agente en el Containerfile, y crea las
- * carpetas de volúmenes `data/` y `workspace/` (así Podman no las crea con otro
- * dueño). No pisa archivos existentes salvo `--force`.
+ * La copia la hace scaffold.js; aquí solo va la lista de plantillas.
  */
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const HERE = path.dirname(fileURLToPath(import.meta.url))
-
-function agentVersion () {
-  try { return JSON.parse(fs.readFileSync(path.join(HERE, 'package.json'), 'utf8')).version }
-  catch { return 'latest' }
-}
+import { scaffold as write } from './scaffold.js'
 
 // plantilla en templates/  →  nombre real que se escribe en el destino
 const FILES = {
@@ -28,24 +15,8 @@ const FILES = {
 }
 const DIRS = ['data', 'workspace'] // volúmenes montados
 
-/**
- * Escribe el andamiaje en `targetDir`.
- * @returns {{ written:string[], skipped:string[], dirs:string[], targetDir:string, version:string }}
- */
-export function scaffold (targetDir = '.', { force = false } = {}) {
-  const version = agentVersion()
-  fs.mkdirSync(targetDir, { recursive: true })
-  const written = []; const skipped = []
-  for (const [src, dest] of Object.entries(FILES)) {
-    const out = path.join(targetDir, dest)
-    if (fs.existsSync(out) && !force) { skipped.push(dest); continue }
-    let content = fs.readFileSync(path.join(HERE, 'templates', src), 'utf8')
-    content = content.replace(/__IA_AGENT_VERSION__/g, version)
-    fs.writeFileSync(out, content)
-    written.push(dest)
-  }
-  for (const d of DIRS) fs.mkdirSync(path.join(targetDir, d), { recursive: true })
-  return { written, skipped, dirs: DIRS, targetDir, version }
+export function scaffold (targetDir = '.', opts = {}) {
+  return write(targetDir, opts, { files: FILES, dirs: DIRS })
 }
 
 export default { scaffold }

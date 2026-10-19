@@ -84,9 +84,9 @@ export class ClaudeDriver {
       tokens = contextTokens(finalEv)
     }
     if (!out) {
-      if (finalEv?.is_error) throw new Error(String(finalEv.result || 'claude reportó un error'))
+      if (finalEv?.is_error) throw new Error(String(finalEv.result || 'claude reported an error'))
       if (stderrText) throw new Error(stderrText.slice(0, 500))
-      throw new Error('claude no devolvió respuesta')
+      throw new Error('claude returned no response')
     }
     if (nextSid) this.sessionId = nextSid
     return { text: out, sessionId: nextSid, tokens }
@@ -112,12 +112,12 @@ export class ClaudeDriver {
       const to = this.timeoutMs > 0
         ? setTimeout(() => { try { p.kill('SIGKILL') } catch {}; reject(new Error('timeout')) }, this.timeoutMs)
         : null
-      p.on('error', (e) => { if (to) clearTimeout(to); reject(new Error(`no se pudo ejecutar '${this.bin}' (¿instalado y en PATH?): ${e.message}`)) })
+      p.on('error', (e) => { if (to) clearTimeout(to); reject(new Error(`could not run '${this.bin}' (installed and on PATH?): ${e.message}`)) })
       p.on('close', (code) => {
         if (to) clearTimeout(to)
         // stream-json puede escribir su 'result' final y salir 0; errores no cero ⇒ rechazar.
         if (code === 0 || code === null) resolve()
-        else reject(new Error(errBuf.slice(0, 500) || `claude salió con código ${code}`))
+        else reject(new Error(errBuf.slice(0, 500) || `claude exited with code ${code}`))
       })
     })
   }
